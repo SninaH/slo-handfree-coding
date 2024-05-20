@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "speech-recorder": "^2.1.0"
+  }
+}
