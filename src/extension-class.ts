@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { PythonShell } from 'python-shell';
+import { PythonShell, Options} from 'python-shell';
 // import CommandHandler from "./find-command-offline";
 
 
@@ -9,13 +9,17 @@ export default class Extension {
     private pythonRazpoznavalnikURL: string;
     private narekovanje: boolean = false;
     private context: vscode.ExtensionContext;
-    startListeningOnClick: vscode.Disposable;	
+    startListeningOnClick: vscode.Disposable;
+    transcriberLink: string;	
 
     constructor(context: vscode.ExtensionContext) {
         this.context = context;
         
         //set python file path for speech recognition
         this.pythonRazpoznavalnikURL = vscode.Uri.joinPath(context.extensionUri, "src", "razpoznavalnik.py").fsPath;
+
+        //get the path to the transcriber from settings
+        this.transcriberLink = vscode.workspace.getConfiguration('slo-handsfree-coding').get('transcriberLink') as string;
         
         //create status bar item
         let StatusBarOnClickCommandName:string = 'slo-handsfree-coding.listen';
@@ -63,7 +67,10 @@ export default class Extension {
         this.myStatusBarItem.show();
     
         try {
-            const messages: string[] = await PythonShell.run(this.pythonRazpoznavalnikURL, undefined);
+            let options: Options = {
+                args: [this.transcriberLink]
+            };
+            const messages: string[] = await PythonShell.run(this.pythonRazpoznavalnikURL, options);
             this.updateStatusBarNotListening();
             console.log(messages);
     
@@ -71,12 +78,15 @@ export default class Extension {
             if (messages && messages.length > 0) {
                 let lastMessage = messages[messages.length - 1];
                 let transcription: string;
+                //TODO: preveri vse tipe Response, ne le 200
                 (lastMessage === '<Response [200]>') ? transcription = '' : transcription = lastMessage;
                 return transcription;
             } else {
                 throw new Error('No messages received from PythonShell');
             }
+            
         } catch (error) {
+            this.updateStatusBarNotListening();
             console.error('Error during transcription:', error);
             throw error; // Re-throw the error if you want the calling function to handle it
         }

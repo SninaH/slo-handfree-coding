@@ -21,7 +21,17 @@
         "command": "slo-handsfree-coding.startListeningWindow",
         "title": "Start Listening Window"
       }
-    ]
+    ],
+    "configuration": {
+      "title": "Slo Handsfree Coding",
+      "properties": {
+        "slo-handsfree-coding.transcriberLink": {
+          "type": "string",
+          "default": "http://localhost:8000",
+          "description": "Link to the transcriber server you have set up with docker from https://github.com/clarinsi/Slovene_ASR_e2e/ or https://github.com/clarinsi/Slovene_ASR_e2e/pull/5 (default: http://localhost:8000/)\nDO NOT PUT / AT THE END OF THE LINK"
+        }
+      }
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
