@@ -1,6 +1,7 @@
 import speech_recognition as sr
 import requests
 import sys
+from requests.exceptions import ConnectionError
 
 print("start python script")
 
@@ -22,18 +23,19 @@ transcribe_link = link + "/api/transcribe"
 
 #result = requests.get(health_check_link)
 
-
-# audioFile = open('audio/speech.wav', 'rb')
-result = requests.post(transcribe_link, files={"audio_file":audio.get_wav_data()})
-# audioFile.close()
-print(result)
 try:
-    print(result.json()["result"])
-except:
-    print("unable to print transcription")
-    # ne pozabi da tisto kar zazna kot da ni govor zapre v <> npr <laugh>
-    # zaznava tudi mašila
-
+    # audioFile = open('audio/speech.wav', 'rb')
+    result = requests.post(transcribe_link, files={"audio_file":audio.get_wav_data()})
+    # audioFile.close()
+    print(result)
+    try:
+        print(result.json()["result"])
+    except:
+        print("unable to print transcription")
+        # ne pozabi da tisto kar zazna kot da ni govor zapre v <> npr <laugh>
+        # zaznava tudi mašila
+except ConnectionError:
+    print("[ERROR] Unable to connect to server")
     
 
     

@@ -29,6 +29,136 @@
           "type": "string",
           "default": "http://localhost:8000",
           "description": "Link to the transcriber server you have set up with docker from https://github.com/clarinsi/Slovene_ASR_e2e/ or https://github.com/clarinsi/Slovene_ASR_e2e/pull/5 (default: http://localhost:8000/)\nDO NOT PUT / AT THE END OF THE LINK"
+        },
+        "slo-handsfree-coding.commandsName": {
+          "type": "object",
+          "description": "Tu lahko spremenite imena ukazov za urejanje kode in upravljanje urejevalnika. Spreminjajte le vrednosti na levi strani, desno stran pa pustite nespremenjeno.",
+          "default": {
+            "gor": "UP",
+            "dol": "DOWN",
+            "levo": "LEFT",
+            "desno": "RIGHT",
+            "izbriši": "DELETE",
+            "brisanje": "DELETE",
+            "briši": "DELETE",
+            "kopiraj": "COPY",
+            "prilepi": "PASTE",
+            "narekuj": "DICTATE",
+            "narekuj brez posebnih znakov": "DICTATE_WITHOUT_SPECIAL_CHARACTERS",
+            "narekovanje brez posebnih znakov": "DICTATE_WITHOUT_SPECIAL_CHARACTERS",
+            "nehaj narekovanje": "STOP_DICTATING",
+            "nehaj narekovati": "STOP_DICTATING",
+            "stop narekovanje": "STOP_DICTATING",
+            "stop": "STOP",
+            "nastavitve": "SETTINGS",
+            "shrani": "SAVE"
+          }
+        },
+        "slo-handsfree-coding.commandsWithParametersName":{
+            "dodaj": "ADD",
+            "nova" : "NEW",
+            "nov" : "NEW",
+            "novo" : "NEW",
+            "odpri": "OPEN",
+            "označi": "SELECT"
+        },
+        "slo-handsfree-coding.objectsName": {
+          "type": "object",
+          "description": "Tu lahko spremenite imena objektov, ki jih lahko narekujete. Spreminjajte le vrednosti na levi strani, desno stran pa pustite nespremenjeno.",
+          "default": {
+            "razred": "CLASS",
+            "funkcija": "FUNCTION",
+            "metoda": "METHOD",
+            "spremenljivka": "VARIABLE",
+            "konstanta": "CONSTANT",
+            "import": "IMPORT",
+            "from": "FROM",
+            "importiraj": "IMPORT",
+            "iz": "FROM",
+            "ključ": "KEY",
+            "vrednost": "VALUE",
+            "seznam": "LIST",
+            "slovar": "DICTIONARY",
+            "niz": "STRING",
+            "celo število": "INTEGER",
+            "decimalno število": "FLOAT",
+            "če": "IF",
+            "sicer": "ELSE",
+            "dokler": "WHILE",
+            "vrni": "RETURN",
+            "izpiši": "PRINT",
+            "printaj": "PRINT",
+            "vnos": "INPUT"
+          }
+        },
+        "slo-handsfree-coding.KeywordsName":{
+          "type": "object",
+          "description": "Tu lahko spremenite imena elementov, ki jih lahko narekujete. Spreminjajte le vrednosti na levi strani, desno stran pa pustite nespremenjeno.",
+          "default": {
+            "tip": "TYPE"
+
+          }
+        },
+        "slo-handsfree-coding.specialCharactersName": {
+          "type": "object",
+          "description": "Tu lahko spremenite imena posebnih znakov ali dodate nov par, če želite da se določena beseda preslika v drugo besedo ali znak (npr \"čas\":\"time\", ki jih lahko narekujete. Spreminjajte le vrednosti na levi strani, desno stran pa pustite nespremenjeno.",
+            "default": {
+              "klicaj": "!",
+              "vprašaj": "?",
+              "dvopičje": ":",
+              "pomišljaj": "-",
+              "narekovaj": "\"",
+              "enojni narekovaj": "'",
+              "poševnica": "/",
+              "zvezdica": "*",
+              "odstavek": "\t",
+              "pika": ".",
+              "vejica": ",",
+              "oklepaj": "(",
+              "zaklepaj": ")",
+              "zavit oklepaj": "{",
+              "zavit zalepaj": "}",
+              "oglati oklepaj": "[",
+              "oglati zaklepaj": "]",
+              "plus": "+",
+              "minus": "-",
+              "je enako": "=",
+              "enako": "=",
+              "dvojni enačaj": "==",
+              "manj": "<",
+              "več": ">",
+              "manj ali enako": "<=",
+              "več ali enako": ">=",
+              "ni enako": "!=",
+              "ne enako": "!=",
+              "neenako": "!=",
+              "in": "&",
+              "ali": "|",
+              "lojtra": "#",
+              "procent": "%",
+              "dolar": "$",
+              "podpičje": ";",
+              "afna": "@",
+              "strešica": "^",
+              "leva poševnica": "\\",
+              "backslash": "\\"
+            }
+        },
+        "slo-handsfree-coding.numbersName": {
+          "type": "object",
+          "description": "Tu lahko spremenite imena števil, ki jih lahko narekujete. Spreminjajte le vrednosti na levi strani, desno stran pa pustite nespremenjeno.",
+          "default": {
+            "nič": "0",
+            "ena": "1",
+            "dva": "2",
+            "tri": "3",
+            "štiri": "4",
+            "pet": "5",
+            "šest": "6",
+            "sedem": "7",
+            "osem": "8",
+            "devet": "9"
+          }
         }
       }
     }

@@ -1,14 +1,18 @@
 import * as vscode from 'vscode';
 import { PythonShell, Options} from 'python-shell';
-// import CommandHandler from "./find-command-offline";
+import CommandHandler from "./find-command-offline";
+import { dictationMode } from './functions';
 
 
 
 export default class Extension {
     private myStatusBarItem: vscode.StatusBarItem;
+    private stopButton: vscode.StatusBarItem;
     private pythonRazpoznavalnikURL: string;
     private narekovanje: boolean = false;
+    private posebniZnaki: boolean = true;
     private context: vscode.ExtensionContext;
+    private pressedStopButton: boolean = false;
     startListeningOnClick: vscode.Disposable;
     transcriberLink: string;	
 
@@ -21,22 +25,59 @@ export default class Extension {
         //get the path to the transcriber from settings
         this.transcriberLink = vscode.workspace.getConfiguration('slo-handsfree-coding').get('transcriberLink') as string;
         
-        //create status bar item
+        //create status bar item for listening
         let StatusBarOnClickCommandName:string = 'slo-handsfree-coding.listen';
 	    this.myStatusBarItem = vscode.window.createStatusBarItem('statusBarRazpoznavalnik', vscode.StatusBarAlignment.Right, 100);
 	    this.myStatusBarItem.command = StatusBarOnClickCommandName;
 	    this.updateStatusBarNotListening();
 	    this.context.subscriptions.push(this.myStatusBarItem);
 
+        //create status bar item for stopping listening
+        this.stopButton = vscode.window.createStatusBarItem('stopButton', vscode.StatusBarAlignment.Right, 99);
+        this.stopButton.text = `$(stop-circle) Stop poslušanje`;
+        let StopButtonOnClickCommandName:string = 'slo-handsfree-coding.stopListening';
+        this.stopButton.command = StopButtonOnClickCommandName;
+        this.stopButton.show();
+        this.context.subscriptions.push(this.stopButton);
+
+        //add stop button functionality
+        let stopListeningOnClick = vscode.commands.registerCommand(StopButtonOnClickCommandName, () => {
+            this.pressedStopButton = true;
+            this.stopButton.text = `$(stop) Poslušanje ustavljeno`;
+        });
+
         this.startListeningOnClick = vscode.commands.registerCommand(StatusBarOnClickCommandName, async () => {
             let transcription: string = await this.startListening();
             vscode.window.showInformationMessage(transcription);
-            //TODO: procesiraj ukaz
-            
-            //če ukaz ni 'stop', nadaljujemo z poslušanjem
-            if(transcription !== 'stop') {
-                vscode.commands.executeCommand(StatusBarOnClickCommandName);
+            //procesiraj ukaz
+            let command: dictationMode = CommandHandler(transcription, this.narekovanje, this.posebniZnaki);
+            console.log(command);
+
+            if(command === dictationMode.dictate) {
+                this.narekovanje = true;
+                this.posebniZnaki = true;
+            }else if(command === dictationMode.dictate_without_special_characters) {
+                this.narekovanje = true;
+                this.posebniZnaki = false;
+            }else if(command === dictationMode.stop_dictating) {
+                this.narekovanje = false;
+                this.posebniZnaki = true;
             }
+            
+            if(command === dictationMode.stop) {
+                this.narekovanje = false;
+                this.posebniZnaki = true;
+            }
+            //če ukaz ni 'stop', nadaljujemo z poslušanjem
+            else if(!this.pressedStopButton) {
+                vscode.commands.executeCommand(StatusBarOnClickCommandName);
+            }else if(this.pressedStopButton) {
+                this.narekovanje = false;
+                this.posebniZnaki = true;
+                this.pressedStopButton = false;
+                this.stopButton.text = `$(stop-circle) Stop poslušanje`;
+            }
+            
         });
         context.subscriptions.push(this.startListeningOnClick);
 
@@ -70,7 +111,10 @@ export default class Extension {
             let options: Options = {
                 args: [this.transcriberLink]
             };
+            console.log('PythonShell started for recording and transcription');
             const messages: string[] = await PythonShell.run(this.pythonRazpoznavalnikURL, options);
+            //označi, da ne posluša več
+            console.log('Listening stopped');
             this.updateStatusBarNotListening();
             console.log(messages);
     
@@ -79,8 +123,13 @@ export default class Extension {
                 let lastMessage = messages[messages.length - 1];
                 let transcription: string;
                 //TODO: preveri vse tipe Response, ne le 200
+                if(lastMessage === '[ERROR] Unable to connect to server') {
+                    vscode.window.showErrorMessage('Napaka pri povezavi s strežnikom. Preverite ali deluje razpoznavalnik (docker) in ali ste napisali pravo povezavo v nastavitvah.');
+                    throw new Error('server connection error: transcriber not running or wrong link in settings');
+                } else {
                 (lastMessage === '<Response [200]>') ? transcription = '' : transcription = lastMessage;
                 return transcription;
+                }
             } else {
                 throw new Error('No messages received from PythonShell');
             }
