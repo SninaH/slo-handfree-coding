@@ -112,6 +112,9 @@
               "poševnica": "/",
               "zvezdica": "*",
               "odstavek": "\t",
+              "tab": "\t",
+              "presledek": " ",
+              "nova vrstica": "\n",
               "pika": ".",
               "vejica": ",",
               "oklepaj": "(",
@@ -149,6 +152,7 @@
           "description": "Tu lahko spremenite imena števil, ki jih lahko narekujete. Spreminjajte le vrednosti na levi strani, desno stran pa pustite nespremenjeno.",
           "default": {
             "nič": "0",
+            "en": "1",
             "ena": "1",
             "dva": "2",
             "tri": "3",

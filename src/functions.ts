@@ -20,22 +20,21 @@ export const changeSpecialCharacters = (text: string): string => {
 };
 
 export const changeNumbers = (text: string): string => {
-    const numbers = vscode.workspace.getConfiguration('slo-handsfree-coding').get('numbersName') as { [key: string]: string };
-    const keyPairs = [];
-    for (let key1 in numbers) {
-        for (let key2 in numbers) {
-            if (key1 !== key2) {
-                keyPairs.push(`${key1}\\s+${key2}`);
-            }
-        }
+    // Get numbers object from settings
+    const numbersObj = vscode.workspace.getConfiguration('slo-handsfree-coding').get('numbersName') as { [key: string]: string };
+    // Replace keys with values
+    let replacedText = text;
+    for (const key in numbersObj) {
+        const value = numbersObj[key];
+        // Use Unicode property escapes to match whole words, including those with UTF-8 characters
+        const regex = new RegExp(`(?<=\\P{L}|^)${key}(?=\\P{L}|$)`, 'gu'); // Adjusted to handle UTF-8 characters
+        replacedText = replacedText.replace(regex, value);
     }
-    const regex = new RegExp(keyPairs.join('|'), 'g');
-    text = text.replace(regex, match => {
-        const [key1, key2] = match.split(/\s+/);
-        return `${numbers[key1]}${key2}`;
-    });
-    text = text.replace(new RegExp(Object.keys(numbers).join('|'), 'g'), match => numbers[match]);
-    return text;
+
+    // Remove spaces between numbers
+    replacedText = replacedText.replace(/(\d)\s+(?=\d)/g, "$1");
+
+    return replacedText;
 };
 
 export const functions = {
@@ -88,8 +87,8 @@ export const functions = {
         const editor = vscode.window.activeTextEditor;
         if (editor) {
             //TODO: check all special characters and numbers
-            text = changeSpecialCharacters(text);
             text = changeNumbers(text);
+            text = changeSpecialCharacters(text);
 
             editor.edit(editBuilder => {
                 editBuilder.insert(editor.selection.active, text);
