@@ -101,7 +101,8 @@ export const functions = {
             console.error('Invalid arguments for SETTINGS. Expected 0 arguments');
             return dictationMode.execution_failed;
         } else {
-            await vscode.commands.executeCommand('workbench.action.openSettings');
+            // Open settings with search bar filled with 'slo-handsfree-coding' so that it opens the extension settings
+            await vscode.commands.executeCommand('workbench.action.openSettings', 'slo-handsfree-coding');
             return dictationMode.other;
         }
     },
