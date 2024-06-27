@@ -48,9 +48,10 @@ export default class Extension {
 
         this.startListeningOnClick = vscode.commands.registerCommand(StatusBarOnClickCommandName, async () => {
             let transcription: string = await this.startListening();
+            transcription = transcription.replace(/<[^>]+>/g, '');
             vscode.window.showInformationMessage(transcription);
             //procesiraj ukaz
-            let command: dictationMode = CommandHandler(transcription, this.narekovanje, this.posebniZnaki);
+            let command: dictationMode = await CommandHandler(transcription, this.narekovanje, this.posebniZnaki);
             console.log(command);
 
             if(command === dictationMode.dictate) {

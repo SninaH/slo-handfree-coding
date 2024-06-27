@@ -9,7 +9,9 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": ["onLanguage:python"],
+  "activationEvents": [
+    "onLanguage:python"
+  ],
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
@@ -32,17 +34,8 @@
         },
         "slo-handsfree-coding.commandsName": {
           "type": "object",
-          "description": "Tu lahko spremenite imena ukazov za urejanje kode in upravljanje urejevalnika. Spreminjajte le vrednosti na levi strani, desno stran pa pustite nespremenjeno.",
+          "description": "Tu lahko spremenite imena ukazov za urejanje kode in upravljanje urejevalnika. Spreminjajte le vrednosti na levi strani. Če želite odstraniti par, spremenite levo stran na znak, ki ni v abecedi npr. _",
           "default": {
-            "gor": "UP",
-            "dol": "DOWN",
-            "levo": "LEFT",
-            "desno": "RIGHT",
-            "izbriši": "DELETE",
-            "brisanje": "DELETE",
-            "briši": "DELETE",
-            "kopiraj": "COPY",
-            "prilepi": "PASTE",
             "narekuj": "DICTATE",
             "narekuj brez posebnih znakov": "DICTATE_WITHOUT_SPECIAL_CHARACTERS",
             "narekovanje brez posebnih znakov": "DICTATE_WITHOUT_SPECIAL_CHARACTERS",
@@ -51,20 +44,46 @@
             "stop narekovanje": "STOP_DICTATING",
             "stop": "STOP",
             "nastavitve": "SETTINGS",
-            "shrani": "SAVE"
+            "shrani": "SAVE_FILE",
+            "shrani kot": "SAVE_FILE_AS",
+            "zapri zavihek": "CLOSE_TAB",
+            "novo okno": "NEW_WINDOW",
+            "nova datoteka": "NEW_FILE",
+            "kopiraj": "COPY",
+            "prilepi": "PASTE",
+            "izreži": "CUT",
+            "razveljavi": "UNDO",
+            "nazaj": "UNDO",
+            "uveljavi": "REDO",
+            "naprej": "REDO"
+          },
+          "additionalProperties": {
+            "type": "string"
           }
         },
-        "slo-handsfree-coding.commandsWithParametersName":{
+        "slo-handsfree-coding.commandsWithParametersName": {
+          "type": "object",
+          "description": "Tu lahko spremenite imena ukazov za urejanje kode in upravljanje urejevalnika. Spreminjajte vrednosti na levi strani. Če želite odstraniti par, spremenite levo stran na znak, ki ni v abecedi npr. _",
+          "default": {
             "dodaj": "ADD",
-            "nova" : "NEW",
-            "nov" : "NEW",
-            "novo" : "NEW",
+            "nova": "NEW",
+            "nov": "NEW",
+            "novo": "NEW",
             "odpri": "OPEN",
-            "označi": "SELECT"
+            "označi": "SELECT",
+            "izbriši": "DELETE",
+            "brisanje": "DELETE",
+            "briši": "DELETE",
+            "pojdi": "GO",
+            "premakni": "MOVE"
+          },
+          "additionalProperties": {
+              "type": "string"
+          }
         },
         "slo-handsfree-coding.objectsName": {
           "type": "object",
-          "description": "Tu lahko spremenite imena objektov, ki jih lahko narekujete. Spreminjajte le vrednosti na levi strani, desno stran pa pustite nespremenjeno.",
+          "description": "Tu lahko spremenite imena objektov, ki jih lahko narekujete. Spreminjajte le vrednosti na levi strani. Če želite odstraniti par, spremenite levo stran na znak, ki ni v abecedi npr. _",
           "default": {
             "razred": "CLASS",
             "funkcija": "FUNCTION",
@@ -89,67 +108,89 @@
             "izpiši": "PRINT",
             "printaj": "PRINT",
             "vnos": "INPUT"
+          },
+          "additionalProperties": {
+              "type": "string"
           }
         },
-        "slo-handsfree-coding.KeywordsName":{
+        "slo-handsfree-coding.KeywordsName": {
           "type": "object",
-          "description": "Tu lahko spremenite imena elementov, ki jih lahko narekujete. Spreminjajte le vrednosti na levi strani, desno stran pa pustite nespremenjeno.",
+          "description": "Tu lahko spremenite imena elementov, ki jih lahko narekujete. Spreminjajte le vrednosti na levi strani. Če želite odstraniti par, spremenite levo stran na znak, ki ni v abecedi npr. _",
           "default": {
-            "tip": "TYPE"
-
+            "tip": "TYPE",
+            "gor": "UP",
+            "dol": "DOWN",
+            "levo": "LEFT",
+            "desno": "RIGHT",
+            "vrstica": "LINE",
+            "vrstico": "LINE",
+            "začetek": "START",
+            "konec": "END",
+            "naslednji": "NEXT",
+            "prejšnji": "PREVIOUS",
+            "prejšnja": "PREVIOUS",
+            "prejšnje": "PREVIOUS",
+            "datoteka": "FILE",
+            "datoteke": "FILE"
+          },
+          "additionalProperties": {
+              "type": "string"
           }
         },
         "slo-handsfree-coding.specialCharactersName": {
           "type": "object",
-          "description": "Tu lahko spremenite imena posebnih znakov ali dodate nov par, če želite da se določena beseda preslika v drugo besedo ali znak (npr \"čas\":\"time\", ki jih lahko narekujete. Spreminjajte le vrednosti na levi strani, desno stran pa pustite nespremenjeno.",
-            "default": {
-              "klicaj": "!",
-              "vprašaj": "?",
-              "dvopičje": ":",
-              "pomišljaj": "-",
-              "narekovaj": "\"",
-              "enojni narekovaj": "'",
-              "poševnica": "/",
-              "zvezdica": "*",
-              "odstavek": "\t",
-              "tab": "\t",
-              "presledek": " ",
-              "nova vrstica": "\n",
-              "pika": ".",
-              "vejica": ",",
-              "oklepaj": "(",
-              "zaklepaj": ")",
-              "zavit oklepaj": "{",
-              "zavit zalepaj": "}",
-              "oglati oklepaj": "[",
-              "oglati zaklepaj": "]",
-              "plus": "+",
-              "minus": "-",
-              "je enako": "=",
-              "enako": "=",
-              "dvojni enačaj": "==",
-              "manj": "<",
-              "več": ">",
-              "manj ali enako": "<=",
-              "več ali enako": ">=",
-              "ni enako": "!=",
-              "ne enako": "!=",
-              "neenako": "!=",
-              "in": "&",
-              "ali": "|",
-              "lojtra": "#",
-              "procent": "%",
-              "dolar": "$",
-              "podpičje": ";",
-              "afna": "@",
-              "strešica": "^",
-              "leva poševnica": "\\",
-              "backslash": "\\"
-            }
+          "description": "Tu lahko spremenite imena posebnih znakov ali dodate nov par, če želite da se določena beseda preslika v drugo besedo ali znak (npr \"čas\":\"time\", ki jih lahko narekujete. Spreminjajte le vrednosti na levi strani. Če želite odstraniti par, spremenite levo stran na znak, ki ni v abecedi npr. _",
+          "default": {
+            "klicaj": "!",
+            "vprašaj": "?",
+            "dvopičje": ":",
+            "pomišljaj": "-",
+            "narekovaj": "\"",
+            "enojni narekovaj": "'",
+            "poševnica": "/",
+            "zvezdica": "*",
+            "odstavek": "\t",
+            "tab": "\t",
+            "presledek": " ",
+            "nova vrstica": "\n",
+            "pika": ".",
+            "vejica": ",",
+            "oklepaj": "(",
+            "zaklepaj": ")",
+            "zavit oklepaj": "{",
+            "zavit zalepaj": "}",
+            "oglati oklepaj": "[",
+            "oglati zaklepaj": "]",
+            "plus": "+",
+            "minus": "-",
+            "je enako": "=",
+            "enako": "=",
+            "dvojni enačaj": "==",
+            "manj": "<",
+            "več": ">",
+            "manj ali enako": "<=",
+            "več ali enako": ">=",
+            "ni enako": "!=",
+            "ne enako": "!=",
+            "neenako": "!=",
+            "in": "&",
+            "ali": "|",
+            "lojtra": "#",
+            "procent": "%",
+            "dolar": "$",
+            "podpičje": ";",
+            "afna": "@",
+            "strešica": "^",
+            "leva poševnica": "\\",
+            "backslash": "\\"
+          },
+          "additionalProperties": {
+              "type": "string"
+          }
         },
         "slo-handsfree-coding.numbersName": {
           "type": "object",
-          "description": "Tu lahko spremenite imena števil, ki jih lahko narekujete. Spreminjajte le vrednosti na levi strani, desno stran pa pustite nespremenjeno.",
+          "description": "Tu lahko spremenite imena števil, ki jih lahko narekujete. Spreminjajte le vrednosti na levi strani. ",
           "default": {
             "nič": "0",
             "en": "1",
@@ -162,6 +203,9 @@
             "sedem": "7",
             "osem": "8",
             "devet": "9"
+          },
+          "additionalProperties": {
+              "type": "string"
           }
         }
       }

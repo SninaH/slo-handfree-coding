@@ -5,10 +5,11 @@ import { dictationMode } from './functions';
 import * as vscode from 'vscode';
 
 // Execute the function based on the command 
-function executeFunctionByName(fName: string, args: any[]): dictationMode {
+async function executeFunctionByName(fName: string, args: any[]): Promise<dictationMode> {
     const func = functions[fName as keyof typeof functions]; // Add an index signature to allow indexing with a string
     if (typeof func === 'function') {
-        return func(args); // Change the spread operator to a rest parameter
+        const r = await func(args); // Change the spread operator to a rest parameter
+        return r;
     } else {
         console.error(`Function ${fName} not found.`);
         return dictationMode.function_not_found;
@@ -17,14 +18,18 @@ function executeFunctionByName(fName: string, args: any[]): dictationMode {
 
 // Get the function name and its arguments 
 function getNameAndArgs(transcription: string): [string, any[]] { 
+    //get commands without parameters
     let commands: { [key: string]: string } = vscode.workspace.getConfiguration('slo-handsfree-coding').get('commandsName') as { [key: string]: string };
     if(commands.hasOwnProperty(transcription)) {
         return [commands[transcription], []];
     }
+    //get commands with parameters
     commands = vscode.workspace.getConfiguration('slo-handsfree-coding').get('commandsWithParametersName') as { [key: string]: string };
     for (let key in commands) {
         let idx_substring = transcription.indexOf(key);
         if(idx_substring !== -1) {
+            //found command
+            //now get the arguments
             let args = transcription.substring(idx_substring + key.length).trim().split(' ');
             return [commands[key], args];
         }
@@ -39,7 +44,7 @@ function matchStringWithKeysOfValue(s: string, value:string, obj: { [key: string
 }
 //process the transcription and execute the command
 //return name of command
-export default function findCommandOffline(transcription: string, narekovanje: boolean, posebniZnaki: boolean): dictationMode {
+export default async function findCommandOffline(transcription: string, narekovanje: boolean, posebniZnaki: boolean): Promise<dictationMode> {
     let dicMode = dictationMode.other;
     if(narekovanje && posebniZnaki) {
         const commands = vscode.workspace.getConfiguration('slo-handsfree-coding').get('commandsName') as { [key: string]: string };
@@ -49,7 +54,7 @@ export default function findCommandOffline(transcription: string, narekovanje: b
             return dictationMode.stop;
         }
         dicMode = dictationMode.dictate;
-        executeFunctionByName('insert', [transcription]);
+        await executeFunctionByName('insert', [transcription]);
     }else if(narekovanje && !posebniZnaki) {
         const commands = vscode.workspace.getConfiguration('slo-handsfree-coding').get('commandsName') as { [key: string]: string };
         if (matchStringWithKeysOfValue(transcription, "STOP_DICTATING", commands)) {
@@ -58,7 +63,7 @@ export default function findCommandOffline(transcription: string, narekovanje: b
             return dictationMode.stop;
         }
         dicMode = dictationMode.dictate_without_special_characters;
-        executeFunctionByName('insert_plain_text', [transcription]);
+        await executeFunctionByName('insert_plain_text', [transcription]);
     }
     else{    
         // Get the function name and its arguments
@@ -67,6 +72,6 @@ export default function findCommandOffline(transcription: string, narekovanje: b
             return dictationMode.no_command_found;
         }
         // Execute the function based on the command
-        dicMode = executeFunctionByName(fName, args);  }
+        dicMode = await executeFunctionByName(fName, args);  }
     return dicMode;
 }

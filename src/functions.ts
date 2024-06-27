@@ -38,7 +38,7 @@ export const changeNumbers = (text: string): string => {
 };
 
 export const functions = {
-    insert_plain_text: (args: any[]): dictationMode => {
+    insert_plain_text: async (args: any[]): Promise<dictationMode> => {
         if (args.length !== 1 || typeof args[0] !== 'string') {
             console.error('Invalid arguments for insert_plain_text. Expected 1 argument of type string.');
             return dictationMode.execution_failed;
@@ -46,11 +46,30 @@ export const functions = {
         const text = args[0];
         const editor = vscode.window.activeTextEditor;
         if (editor) {
-            editor.edit(editBuilder => {
+            await editor.edit(editBuilder => {
                 editBuilder.insert(editor.selection.active, text);
             });
         }
         return dictationMode.dictate_without_special_characters;
+    },
+    insert: async (args: any[]): Promise<dictationMode> => {
+        if (args.length !== 1 || typeof args[0] !== 'string') {
+            console.error('Invalid arguments for insert. Expected 1 argument of type string.');
+            return dictationMode.execution_failed;
+        }
+
+        let text = args[0];
+        const editor = vscode.window.activeTextEditor;
+        if (editor) {
+            //check all special characters and numbers
+            text = changeNumbers(text);
+            text = changeSpecialCharacters(text);
+
+            await editor.edit(editBuilder => {
+                editBuilder.insert(editor.selection.active, text);
+            });
+        }
+        return dictationMode.dictate;
     },
     DICTATE_WITHOUT_SPECIAL_CHARACTERS: (args: any[]): dictationMode => {
         if (args.length !== 0) {
@@ -76,34 +95,120 @@ export const functions = {
             return dictationMode.stop;
         }
     },
-    insert: (args: any[]): dictationMode => {
-        if (args.length !== 1 || typeof args[0] !== 'string') {
-            console.error('Invalid arguments for insert. Expected 1 argument of type string.');
-            return dictationMode.execution_failed;
-        }
 
-
-        let text = args[0];
-        const editor = vscode.window.activeTextEditor;
-        if (editor) {
-            //TODO: check all special characters and numbers
-            text = changeNumbers(text);
-            text = changeSpecialCharacters(text);
-
-            editor.edit(editBuilder => {
-                editBuilder.insert(editor.selection.active, text);
-            });
-        }
-        return dictationMode.dictate;
-    },
-    SETTINGS: (args: any[]): dictationMode => {
+    SETTINGS: async (args: any[]): Promise<dictationMode> => {
         if (args.length !== 0) {
             console.error('Invalid arguments for SETTINGS. Expected 0 arguments');
             return dictationMode.execution_failed;
         } else {
-            vscode.commands.executeCommand('workbench.action.openSettings');
+            await vscode.commands.executeCommand('workbench.action.openSettings');
             return dictationMode.other;
         }
-    }
-
+    },
+    CLOSE_TAB: async (args: any[]): Promise<dictationMode> => {
+        if (args.length !== 0) {
+            console.error('Invalid arguments for SETTINGS. Expected 0 arguments');
+            return dictationMode.execution_failed;
+        } else {
+            await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
+            return dictationMode.other;
+        }
+    },
+    CLOSE_WINDOW: async (args: any[]): Promise<dictationMode> => {
+        if (args.length !== 0) {
+            console.error('Invalid arguments for CLOSE_WINDOW. Expected 0 arguments');
+            return dictationMode.execution_failed;
+        } else {
+            await vscode.commands.executeCommand('workbench.action.closeWindow');
+            return dictationMode.other;
+        }
+    },
+    NEW_WINDOW: async (args: any[]): Promise<dictationMode> => {
+        if (args.length !== 0) {
+            console.error('Invalid arguments for NEW_WINDOW. Expected 0 arguments');
+            return dictationMode.execution_failed;
+        } else {
+            await vscode.commands.executeCommand('workbench.action.newWindow');
+            return dictationMode.other;
+        }
+    },
+    NEW_FILE: async (args: any[]): Promise<dictationMode> => {
+        if (args.length !== 0) {
+            console.error('Invalid arguments for NEW_FILE. Expected 0 arguments');
+            return dictationMode.execution_failed;
+        } else {
+            await vscode.commands.executeCommand('workbench.action.files.newUntitledFile');
+            return dictationMode.other;
+        }
+    },
+    // Save file like Ctrl + S
+    SAVE_FILE: async (args: any[]): Promise<dictationMode> => {
+        if (args.length !== 0) {
+            console.error('Invalid arguments for SAVE_FILE. Expected 0 arguments');
+            return dictationMode.execution_failed;
+        } else {
+            await vscode.commands.executeCommand('workbench.action.files.save');
+            return dictationMode.other;
+        }
+    },
+    // Save file as like Ctrl + Shift + S
+    SAVE_FILE_AS: async (args: any[]): Promise<dictationMode> => {
+        if (args.length !== 0) {
+            console.error('Invalid arguments for SAVE_FILE_AS. Expected 0 arguments');
+            return dictationMode.execution_failed;
+        } else {
+            await vscode.commands.executeCommand('workbench.action.files.saveAs');
+            return dictationMode.other;
+        }
+    },
+    // Copy like Ctrl + C
+    COPY: async (args: any[]): Promise<dictationMode> => {
+        if (args.length !== 0) {
+            console.error('Invalid arguments for COPY. Expected 0 arguments');
+            return dictationMode.execution_failed;
+        } else {
+            await vscode.commands.executeCommand('editor.action.clipboardCopyAction');
+            return dictationMode.other;
+        }
+    },
+    // Cut like Ctrl + X
+    CUT: async (args: any[]): Promise<dictationMode> => {
+        if (args.length !== 0) {
+            console.error('Invalid arguments for CUT. Expected 0 arguments');
+            return dictationMode.execution_failed;
+        } else {
+            await vscode.commands.executeCommand('editor.action.clipboardCutAction');
+            return dictationMode.other;
+        }
+    },
+    // Paste like Ctrl + V
+    PASTE: async (args: any[]): Promise<dictationMode> => {
+        if (args.length !== 0) {
+            console.error('Invalid arguments for PASTE. Expected 0 arguments');
+            return dictationMode.execution_failed;
+        } else {
+            await vscode.commands.executeCommand('editor.action.clipboardPasteAction');
+            return dictationMode.other;
+        }
+    },
+    // Undo like Ctrl + Z
+    UNDO: async (args: any[]): Promise<dictationMode> => {
+        if (args.length !== 0) {
+            console.error('Invalid arguments for UNDO. Expected 0 arguments');
+            return dictationMode.execution_failed;
+        } else {
+            await vscode.commands.executeCommand('undo');
+            return dictationMode.other;
+        }
+    },
+    // Redo like Ctrl + Y
+    REDO: async (args: any[]): Promise<dictationMode> => {
+        if (args.length !== 0) {
+            console.error('Invalid arguments for REDO. Expected 0 arguments');
+            return dictationMode.execution_failed;
+        } else {
+            await vscode.commands.executeCommand('redo');
+            return dictationMode.other;
+        }
+    },
 };
