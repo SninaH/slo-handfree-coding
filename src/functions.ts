@@ -212,4 +212,14 @@ export const functions = {
             return dictationMode.other;
         }
     },
+    // format document like Ctrl + Shift + I
+    FORMAT: async (args: any[]): Promise<dictationMode> => {
+        if (args.length !== 0) {
+            console.error('Invalid arguments for FORMAT. Expected 0 arguments');
+            return dictationMode.execution_failed;
+        } else {
+            await vscode.commands.executeCommand('editor.action.formatDocument');
+            return dictationMode.other;
+        }
+    }
 };

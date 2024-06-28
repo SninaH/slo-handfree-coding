@@ -55,7 +55,9 @@
             "razveljavi": "UNDO",
             "nazaj": "UNDO",
             "uveljavi": "REDO",
-            "naprej": "REDO"
+            "naprej": "REDO",
+            "formatiraj": "FORMAT",
+            "polepšaj": "FORMAT"
           },
           "additionalProperties": {
             "type": "string"
