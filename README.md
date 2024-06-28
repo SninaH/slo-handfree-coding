@@ -1,6 +1,10 @@
 # slo-handsfree-coding README
 
-This is the README for your extension "slo-handsfree-coding". After writing up a brief description, we recommend including the following sections.
+This is a VScode extension to write and edit Python code and use VScode features like debugging by speaking commands in the Slovenian language.
+This project was created for my Thesis.
+
+To je priključek za urejevalnik VScode, ki sem ga ustvarila za diplomsko nalogo. S tem priključkom lahko kodirate tako, da govorite v mikrofon ukaze v slovenščini.
+Lahko pišete in urejate Python kodo ali narekujete splošno besedilo in uporabljate razne funkcije, ki jih ponuja VScode kot je razhroščevanje. 
 
 ## Features
 
