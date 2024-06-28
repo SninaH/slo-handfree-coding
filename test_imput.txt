@@ -1,1 +1,0 @@
-Funkcija u sota, parameter a, b, nova, x je nako absus b, vrni x.
