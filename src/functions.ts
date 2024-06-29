@@ -11,12 +11,120 @@ export const enum dictationMode {
     stop_dictating
 }
 
+const directions = ["UP", "DOWN", "LEFT", "RIGHT", "START", "END", "NEXT", "PREVIOUS"];
+const pythonOjects = [
+    "CLASS",
+    "CONSTANT",
+    "DICTIONARY",
+    "ELSE",
+    "FLOAT",
+    "FROM",
+    "FUNCTION",
+    "IF",
+    "IMPORT",
+    "INPUT",
+    "INTEGER",
+    "KEY",
+    "LIST",
+    "METHOD",
+    "PRINT",
+    "STRING",
+    "VALUE",
+    "VARIABLE",
+    "WHILE",
+    "TYPE"
+];
+const vscodeObjects = ["LINE", "FILE", "VIEW_PORT", "BLANK_LINE", "TAB"];
+
+function removeElementsByIndexes<T>(array: T[], indexes: number[]): T[] {
+    // Sort indexes in descending order
+    const sortedIndexes = indexes.sort((a, b) => b - a);
+
+    // Remove elements at each index
+    for (const index of sortedIndexes) {
+        array.splice(index, 1);
+    }
+
+    return array;
+}
+
+async function goInDirection(direction: string): Promise<boolean> {
+    switch (direction) {
+        case "UP":
+        case "DOWN":
+            await vscode.commands.executeCommand('cursorMove', {
+                to: direction.toLowerCase(),
+                by: 'line',
+                value: 1,
+            });
+            return true;
+        case "LEFT":
+        case "RIGHT":
+            await vscode.commands.executeCommand('cursorMove', {
+                to: direction.toLowerCase(),
+                by: 'character',
+                value: 1,
+            });
+            return true;
+        case "START":
+            await vscode.commands.executeCommand('cursorMove', {
+                to: 'wrappedLineStart',
+            });
+            return true;
+        case "END":
+            await vscode.commands.executeCommand('cursorMove', {
+                to: 'wrappedLineEnd',
+            });
+            return true;
+        case "NEXT":
+            await vscode.commands.executeCommand('cursorMove', {
+                to: 'nextBlankLine',
+            });
+            return true;
+        case "PREVIOUS":
+            await vscode.commands.executeCommand('cursorMove', {
+                to: 'prevBlankLine',
+            });
+            return true;
+        default:
+            return false;
+    }
+}
+
+async function goInDirectionFor(direction: string, num: number): Promise<boolean> {
+    switch (direction) {
+        case "UP":
+        case "DOWN":
+            await vscode.commands.executeCommand('cursorMove', {
+                to: direction.toLowerCase(),
+                by: 'line',
+                value: num,
+            });
+            return true;
+        case "LEFT":
+        case "RIGHT":
+            await vscode.commands.executeCommand('cursorMove', {
+                to: direction.toLowerCase(),
+                by: 'character',
+                value: num,
+            });
+            return true;
+        default:
+            return false;
+
+    }
+}
+
+export const changeKeyWithObjectValue = (text: string, obj: { [key: string]: string }): string => {
+    //change keys with values so that it prioritizes longer keys (for example 'enojni narekovaj' before 'narekovaj')
+    const keysSortedByLengthDesc = Object.keys(obj).sort((a, b) => b.length - a.length);
+    const regex = new RegExp(keysSortedByLengthDesc.join('|'), 'g');
+    return text.replace(regex, match => obj[match]); //replace method returns new string
+};
+
 export const changeSpecialCharacters = (text: string): string => {
     const special_characters = vscode.workspace.getConfiguration('slo-handsfree-coding').get('specialCharactersName') as { [key: string]: string };
-    const keysSortedByLengthDesc = Object.keys(special_characters).sort((a, b) => b.length - a.length);
-    const regex = new RegExp(keysSortedByLengthDesc.join('|'), 'g');
-    text = text.replace(regex, match => special_characters[match]);
-    return text;
+    return changeKeyWithObjectValue(text, special_characters);
 };
 
 export const changeNumbers = (text: string): string => {
@@ -37,6 +145,7 @@ export const changeNumbers = (text: string): string => {
     return replacedText;
 };
 
+//TODO check in every function that needs editor if the editor is active
 export const functions = {
     insert_plain_text: async (args: any[]): Promise<dictationMode> => {
         if (args.length !== 1 || typeof args[0] !== 'string') {
@@ -221,5 +330,117 @@ export const functions = {
             await vscode.commands.executeCommand('editor.action.formatDocument');
             return dictationMode.other;
         }
+    },
+
+    // from here on are functions with arguments
+
+    GO: async (args: any[]): Promise<dictationMode> => {
+        if (args.length < 1) {
+            console.error('Invalid arguments for GO. Expected at least 1 argument');
+            return dictationMode.execution_failed;
+        } else {
+            let nums: [string, number][] = [];
+            let dirs: [string, number][] = [];
+            let pyObjs: [string, number][] = [];
+            let vsObjs: [string, number][] = [];
+            let keywordIdxs: number[] = [];
+
+            for (let i = 0; i < args.length; i++) {
+                const arg = args[i];
+                if (typeof arg === 'number') {
+                    nums.push([arg.toString(), i]);
+                } else if (directions.includes(arg)) {
+                    dirs.push([arg, i]);
+                    keywordIdxs.push(i);
+                } else if (pythonOjects.includes(arg)) {
+                    pyObjs.push([arg, i]);
+                    keywordIdxs.push(i);
+                } else if (vscodeObjects.includes(arg)) {
+                    vsObjs.push([arg, i]);
+                    keywordIdxs.push(i);
+                }
+            }
+            if (pyObjs.length > 0 && vsObjs.length > 0) {
+                console.error('Invalid arguments for GO. Expected either python objects or vscode objects, not both.');
+                return dictationMode.execution_failed;
+            } else if (pyObjs.length > 0) {
+                //TODO go to python object
+                console.log('Go to python object');
+            } else if (vsObjs.length > 0) {
+                if (dirs.length > 0) {
+                    //TODO go for vscode object in direction
+                } else {
+                    console.error('Invalid arguments for GO. Expected at least one direction.');
+                    return dictationMode.execution_failed;
+                }
+
+
+
+            } else if (dirs.length > 0) {
+                //go in direction
+                //because there is no vscode object or python object, we assume that we always move by character if left right
+                if (nums.length === 0) {
+                    for (let dir of dirs) {
+                        await goInDirection(dir[0]);
+                    }
+                }
+                else {
+                    let mergedArray: [string, number][] = dirs.concat(nums);
+                    mergedArray.sort((a, b) => a[1] - b[1]);
+                    while(mergedArray.length > 0){
+                        if(dirs.includes(mergedArray[0])){
+                            if(dirs.includes(mergedArray[1])){
+                                goInDirection(mergedArray[0][0]);
+                                mergedArray = mergedArray.slice(1); //remove first element we just used
+                            } else {
+                                //we have direction and number
+                                let num:number = Number(mergedArray[1][0]);
+                                let succeeded = await goInDirectionFor(mergedArray[0][0], num);
+                                if(succeeded){
+                                    mergedArray = mergedArray.slice(2); //remove first two elements we just used
+                                }else if(dirs.includes(mergedArray[2])){
+                                    goInDirection(mergedArray[0][0]);
+                                    mergedArray = mergedArray.slice(1); //remove first element we just used
+                                }else{
+                                    console.error(`Invalid arguments for GO. ${mergedArray[0][0]} ${num} is not a valid direction.`);
+                                    mergedArray = mergedArray.slice(2);
+                                }
+
+                            }
+                        }else{
+                            //we have number and direction
+                            let num:number = Number(mergedArray[0][0]);
+                            if(dirs.includes(mergedArray[1])){
+                                let succeeded = await goInDirectionFor(mergedArray[1][0], num);
+                                if(succeeded){
+                                    mergedArray = mergedArray.slice(2); //remove first two elements we just used
+                                }else{
+                                    console.error(`Invalid arguments for GO. ${num} ${mergedArray[1][0]} is not a valid direction.`);
+                                    mergedArray = mergedArray.slice(2);
+                                }
+                            }else{
+                                console.error(`Invalid arguments for GO. ${num} ${mergedArray[1][0]} is not a valid direction.`);
+                                mergedArray = mergedArray.slice(2);
+                            }
+                        }
+                    }
+                }
+            } else {
+                console.error('Invalid arguments for GO. Expected at least one direction or object.');
+                return dictationMode.execution_failed;
+            }
+
+
+            return dictationMode.other;
+        }
+
+        //TODO select from to
+        // await vscode.commands.executeCommand('cursorMove', {
+        //     to: 'down',
+        //     by: 'line',
+        //     value: 3,
+        //     select: true
+        // });
     }
+
 };

@@ -2,6 +2,8 @@
 
 import { functions } from './functions';
 import { dictationMode } from './functions';
+import { changeKeyWithObjectValue } from './functions';
+import { changeNumbers } from './functions';
 import * as vscode from 'vscode';
 
 // Execute the function based on the command 
@@ -25,12 +27,18 @@ function getNameAndArgs(transcription: string): [string, any[]] {
     }
     //get commands with parameters
     commands = vscode.workspace.getConfiguration('slo-handsfree-coding').get('commandsWithParametersName') as { [key: string]: string };
+    let objects = vscode.workspace.getConfiguration('slo-handsfree-coding').get('objectsName') as { [key: string]: string };
+    let keywords = vscode.workspace.getConfiguration('slo-handsfree-coding').get('keywordsName') as { [key: string]: string };
     for (let key in commands) {
         let idx_substring = transcription.indexOf(key);
         if(idx_substring !== -1) {
             //found command
             //now get the arguments
-            let args = transcription.substring(idx_substring + key.length).trim().split(' ');
+            let argsString = transcription.substring(idx_substring + key.length).trim(); //get substring after the command
+            argsString = changeKeyWithObjectValue(argsString, objects); //replace objects keys with their values/codes
+            argsString = changeKeyWithObjectValue(argsString, keywords); //replace keywords keys with their values/codes
+            argsString = changeNumbers(argsString); //replace words for numbers with numbers
+            let args = argsString.split(/\s+(?=[A-Z0-9])/); //split by space before capital letter or number because values/codes are in uppercase and we want also numbers as parameters
             return [commands[key], args];
         }
     }

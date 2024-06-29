@@ -1,11 +1,12 @@
 import * as vscode from 'vscode';
-import { PythonShell, Options} from 'python-shell';
+import { PythonShell, Options } from 'python-shell';
 import CommandHandler from "./find-command-offline";
 import { dictationMode } from './functions';
 
 
 
 export default class Extension {
+    private transcriberTimeout: number;
     private myStatusBarItem: vscode.StatusBarItem;
     private stopButton: vscode.StatusBarItem;
     private pythonRazpoznavalnikURL: string;
@@ -14,28 +15,31 @@ export default class Extension {
     private context: vscode.ExtensionContext;
     private pressedStopButton: boolean = false;
     startListeningOnClick: vscode.Disposable;
-    transcriberLink: string;	
+    transcriberLink: string;
 
     constructor(context: vscode.ExtensionContext) {
         this.context = context;
-        
+
+        //get timeout time from settings
+        this.transcriberTimeout = vscode.workspace.getConfiguration('slo-handsfree-coding').get('transcriberTimeout') as number;
+
         //set python file path for speech recognition
         this.pythonRazpoznavalnikURL = vscode.Uri.joinPath(context.extensionUri, "src", "razpoznavalnik.py").fsPath;
 
         //get the path to the transcriber from settings
         this.transcriberLink = vscode.workspace.getConfiguration('slo-handsfree-coding').get('transcriberLink') as string;
-        
+
         //create status bar item for listening
-        let StatusBarOnClickCommandName:string = 'slo-handsfree-coding.listen';
-	    this.myStatusBarItem = vscode.window.createStatusBarItem('statusBarRazpoznavalnik', vscode.StatusBarAlignment.Right, 100);
-	    this.myStatusBarItem.command = StatusBarOnClickCommandName;
-	    this.updateStatusBarNotListening();
-	    this.context.subscriptions.push(this.myStatusBarItem);
+        let StatusBarOnClickCommandName: string = 'slo-handsfree-coding.listen';
+        this.myStatusBarItem = vscode.window.createStatusBarItem('statusBarRazpoznavalnik', vscode.StatusBarAlignment.Right, 100);
+        this.myStatusBarItem.command = StatusBarOnClickCommandName;
+        this.updateStatusBarNotListening();
+        this.context.subscriptions.push(this.myStatusBarItem);
 
         //create status bar item for stopping listening
         this.stopButton = vscode.window.createStatusBarItem('stopButton', vscode.StatusBarAlignment.Right, 99);
         this.stopButton.text = `$(stop-circle) Stop poslušanje`;
-        let StopButtonOnClickCommandName:string = 'slo-handsfree-coding.stopListening';
+        let StopButtonOnClickCommandName: string = 'slo-handsfree-coding.stopListening';
         this.stopButton.command = StopButtonOnClickCommandName;
         this.stopButton.show();
         this.context.subscriptions.push(this.stopButton);
@@ -45,6 +49,7 @@ export default class Extension {
             this.pressedStopButton = true;
             this.stopButton.text = `$(stop) Poslušanje ustavljeno`;
         });
+        // context.subscriptions.push(stopListeningOnClick);
 
         this.startListeningOnClick = vscode.commands.registerCommand(StatusBarOnClickCommandName, async () => {
             let transcription: string = await this.startListening();
@@ -54,31 +59,35 @@ export default class Extension {
             let command: dictationMode = await CommandHandler(transcription, this.narekovanje, this.posebniZnaki);
             console.log(command);
 
-            if(command === dictationMode.dictate) {
+            if (command === dictationMode.dictate) {
                 this.narekovanje = true;
                 this.posebniZnaki = true;
-            }else if(command === dictationMode.dictate_without_special_characters) {
+            } else if (command === dictationMode.dictate_without_special_characters) {
                 this.narekovanje = true;
                 this.posebniZnaki = false;
-            }else if(command === dictationMode.stop_dictating) {
+            } else if (command === dictationMode.stop_dictating) {
                 this.narekovanje = false;
                 this.posebniZnaki = true;
+            } else if (command === dictationMode.no_command_found) {
+                vscode.window.showInformationMessage('Noben ukaz ni bil najden');
+            } else if (command === dictationMode.execution_failed) {
+                vscode.window.showErrorMessage('Izvedba ukaza ni bila uspešna');
             }
-            
-            if(command === dictationMode.stop) {
+
+            if (command === dictationMode.stop) {
                 this.narekovanje = false;
                 this.posebniZnaki = true;
             }
             //če ukaz ni 'stop', nadaljujemo z poslušanjem
-            else if(!this.pressedStopButton) {
+            else if (!this.pressedStopButton) {
                 vscode.commands.executeCommand(StatusBarOnClickCommandName);
-            }else if(this.pressedStopButton) {
+            } else if (this.pressedStopButton) {
                 this.narekovanje = false;
                 this.posebniZnaki = true;
                 this.pressedStopButton = false;
                 this.stopButton.text = `$(stop-circle) Stop poslušanje`;
             }
-            
+
         });
         context.subscriptions.push(this.startListeningOnClick);
 
@@ -86,7 +95,7 @@ export default class Extension {
             vscode.window.showInformationMessage('Click to start listening', 'Start')
                 .then(async selection => {
                     if (selection === 'Start') {
-    
+
                         vscode.commands.executeCommand('slo-handsfree-coding.helloWorld');
                         let transcription: string = await this.startListening();
                         vscode.window.showInformationMessage(transcription);
@@ -95,7 +104,7 @@ export default class Extension {
         });
         context.subscriptions.push(startListeningWindow);
 
-        
+
     }
 
     private updateStatusBarNotListening(): void {
@@ -107,34 +116,48 @@ export default class Extension {
         console.log('Listening started');
         this.myStatusBarItem.text = `$(mic-filled) poslušam`;
         this.myStatusBarItem.show();
-    
+
         try {
             let options: Options = {
                 args: [this.transcriberLink]
             };
             console.log('PythonShell started for recording and transcription');
-            const messages: string[] = await PythonShell.run(this.pythonRazpoznavalnikURL, options);
-            //označi, da ne posluša več
-            console.log('Listening stopped');
-            this.updateStatusBarNotListening();
-            console.log(messages);
-    
-    
-            if (messages && messages.length > 0) {
-                let lastMessage = messages[messages.length - 1];
-                let transcription: string;
-                //TODO: preveri vse tipe Response, ne le 200
-                if(lastMessage === '[ERROR] Unable to connect to server') {
-                    vscode.window.showErrorMessage('Napaka pri povezavi s strežnikom. Preverite ali deluje razpoznavalnik (docker) in ali ste napisali pravo povezavo v nastavitvah.');
-                    throw new Error('server connection error: transcriber not running or wrong link in settings');
-                } else {
-                (lastMessage === '<Response [200]>') ? transcription = '' : transcription = lastMessage;
-                return transcription;
-                }
+            const timeout = (ms: number) => new Promise(resolve => setTimeout(resolve, ms, 'Timeout'));
+            const milliseconds: number = this.transcriberTimeout * 1000;
+            const messages = await Promise.race([
+                PythonShell.run(this.pythonRazpoznavalnikURL, options),
+                timeout(milliseconds)
+            ]) as string[] | "Timeout";
+
+            if (messages === 'Timeout') {
+                console.error(`Operation timed out after ${this.transcriberTimeout} seconds`);
+                // Handle timeout case here
+                this.updateStatusBarNotListening();
+                throw new Error('Transcription timed out');
             } else {
-                throw new Error('No messages received from PythonShell');
+                //označi, da ne posluša več
+                console.log('Listening stopped');
+                this.updateStatusBarNotListening();
+                console.log(messages);
+
+
+                if (messages && messages.length > 0) {
+                    let lastMessage = messages[messages.length - 1];
+                    let transcription: string;
+                    //TODO: preveri vse tipe Response, ne le 200
+                    if (lastMessage === '[ERROR] Unable to connect to server') {
+                        vscode.window.showErrorMessage('Napaka pri povezavi s strežnikom. Preverite ali deluje razpoznavalnik (docker) in ali ste napisali pravo povezavo v nastavitvah.');
+                        throw new Error('server connection error: transcriber not running or wrong link in settings');
+                    } else {
+                        (lastMessage === '<Response [200]>') ? transcription = '' : transcription = lastMessage;
+                        return transcription;
+                    }
+                } else {
+                    throw new Error('No messages received from PythonShell');
+                }
             }
-            
+
+
         } catch (error) {
             this.updateStatusBarNotListening();
             console.error('Error during transcription:', error);
@@ -142,6 +165,6 @@ export default class Extension {
         }
     }
 
-    
-    
+
+
 }

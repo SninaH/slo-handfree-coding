@@ -22,6 +22,16 @@
       {
         "command": "slo-handsfree-coding.startListeningWindow",
         "title": "Start Listening Window"
+      },
+      {
+        "command": "slo-handsfree-coding.listen",
+        "title": "Listen"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "slo-handsfree-coding.listen",
+        "key": "alt+shift+space"
       }
     ],
     "configuration": {
@@ -29,11 +39,19 @@
       "properties": {
         "slo-handsfree-coding.transcriberLink": {
           "type": "string",
+          "scope": "application",
           "default": "http://localhost:8000",
           "description": "Link to the transcriber server you have set up with docker from https://github.com/clarinsi/Slovene_ASR_e2e/ or https://github.com/clarinsi/Slovene_ASR_e2e/pull/5 (default: http://localhost:8000/)\nDO NOT PUT / AT THE END OF THE LINK"
         },
+        "slo-handsfree-coding.transcriberTimeout": {
+          "type": "number",
+          "scope": "application",
+          "default": 120,
+          "description": "Timeout in seconds for the transcriber server: time needed to both record and transcribe (default: 180 = 3 minutes)"
+        },
         "slo-handsfree-coding.commandsName": {
           "type": "object",
+          "scope": "application",
           "description": "Tu lahko spremenite imena ukazov za urejanje kode in upravljanje urejevalnika. Spreminjajte le vrednosti na levi strani. Če želite odstraniti par, spremenite levo stran na znak, ki ni v abecedi npr. _",
           "default": {
             "narekuj": "DICTATE",
@@ -65,6 +83,7 @@
         },
         "slo-handsfree-coding.commandsWithParametersName": {
           "type": "object",
+          "scope": "application",
           "description": "Tu lahko spremenite imena ukazov za urejanje kode in upravljanje urejevalnika. Spreminjajte vrednosti na levi strani. Če želite odstraniti par, spremenite levo stran na znak, ki ni v abecedi npr. _",
           "default": {
             "dodaj": "ADD",
@@ -73,6 +92,7 @@
             "novo": "NEW",
             "odpri": "OPEN",
             "označi": "SELECT",
+            "označ": "SELECT",
             "izbriši": "DELETE",
             "brisanje": "DELETE",
             "briši": "DELETE",
@@ -80,67 +100,92 @@
             "premakni": "MOVE"
           },
           "additionalProperties": {
-              "type": "string"
+            "type": "string"
           }
         },
-        "slo-handsfree-coding.objectsName": {
+        "slo-handsfree-coding.pythonObjectsName": {
           "type": "object",
-          "description": "Tu lahko spremenite imena objektov, ki jih lahko narekujete. Spreminjajte le vrednosti na levi strani. Če želite odstraniti par, spremenite levo stran na znak, ki ni v abecedi npr. _",
+          "scope": "application",
+          "description": "Tu lahko spremenite imena python objektov, ki jih lahko narekujete. Spreminjajte le vrednosti na levi strani. Če želite odstraniti par, spremenite levo stran na znak, ki ni v abecedi npr. _",
           "default": {
             "razred": "CLASS",
-            "funkcija": "FUNCTION",
-            "metoda": "METHOD",
-            "spremenljivka": "VARIABLE",
             "konstanta": "CONSTANT",
-            "import": "IMPORT",
-            "from": "FROM",
-            "importiraj": "IMPORT",
-            "iz": "FROM",
-            "ključ": "KEY",
-            "vrednost": "VALUE",
-            "seznam": "LIST",
             "slovar": "DICTIONARY",
-            "niz": "STRING",
-            "celo število": "INTEGER",
-            "decimalno število": "FLOAT",
-            "če": "IF",
             "sicer": "ELSE",
-            "dokler": "WHILE",
-            "vrni": "RETURN",
+            "decimalno število": "FLOAT",
+            "funkcija": "FUNCTION",
+            "če": "IF",
+            "import": "IMPORT",
+            "importiraj": "IMPORT",
+            "from": "FROM",
+            "iz": "FROM",
+            "celo število": "INTEGER",
+            "ključ": "KEY",
+            "seznam": "LIST",
+            "metoda": "METHOD",
             "izpiši": "PRINT",
             "printaj": "PRINT",
-            "vnos": "INPUT"
+            "vnos": "INPUT",
+            "vrni": "RETURN",
+            "niz": "STRING",
+            "tip": "TYPE",
+            "spremenljivka": "VARIABLE",
+            "vrednost": "VALUE",
+            "dokler": "WHILE"
           },
           "additionalProperties": {
-              "type": "string"
+            "type": "string"
           }
         },
-        "slo-handsfree-coding.KeywordsName": {
+        "slo-handsfree-coding.vscodeObjectsName": {
           "type": "object",
-          "description": "Tu lahko spremenite imena elementov, ki jih lahko narekujete. Spreminjajte le vrednosti na levi strani. Če želite odstraniti par, spremenite levo stran na znak, ki ni v abecedi npr. _",
+          "scope": "application",
+          "description": "Tu lahko spremenite imena objektov, ki jih lahko narekujete. Spreminjajte le vrednosti na levi strani. Če želite odstraniti par, spremenite levo stran na znak, ki ni v abecedi npr. _",
           "default": {
-            "tip": "TYPE",
+            "datoteka": "FILE",
+            "datoteke": "FILE",
+            "vrstica": "LINE",
+            "vrstico": "LINE",
+            "vidno polje": "VIEW_PORT",
+            "prazna vrstica": "BLANK_LINE",
+            "prazno vrstico": "BLANK_LINE",
+            "zavihek": "TAB",
+            "zavihkov": "TAB",
+            "zavihka": "TAB",
+            "zavihki": "TAB",
+            "zavihke": "TAB"
+          },
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "slo-handsfree-coding.directionsName": {
+          "type": "object",
+          "scope": "application",
+          "description": "Tu lahko spremenite imena smeri, ki jih lahko narekujete. Spreminjajte le vrednosti na levi strani. Če želite odstraniti par, spremenite levo stran na znak, ki ni v abecedi npr. _",
+          "default": {
             "gor": "UP",
             "dol": "DOWN",
             "levo": "LEFT",
             "desno": "RIGHT",
-            "vrstica": "LINE",
-            "vrstico": "LINE",
             "začetek": "START",
             "konec": "END",
             "naslednji": "NEXT",
+            "naslednja": "NEXT",
+            "naslednje": "NEXT",
+            "naprej": "NEXT",
             "prejšnji": "PREVIOUS",
             "prejšnja": "PREVIOUS",
             "prejšnje": "PREVIOUS",
-            "datoteka": "FILE",
-            "datoteke": "FILE"
+            "nazaj": "PREVIOUS"
           },
           "additionalProperties": {
-              "type": "string"
+            "type": "string"
           }
         },
         "slo-handsfree-coding.specialCharactersName": {
           "type": "object",
+          "scope": "application",
           "description": "Tu lahko spremenite imena posebnih znakov ali dodate nov par, če želite da se določena beseda preslika v drugo besedo ali znak (npr \"čas\":\"time\", ki jih lahko narekujete. Spreminjajte le vrednosti na levi strani. Če želite odstraniti par, spremenite levo stran na znak, ki ni v abecedi npr. _",
           "default": {
             "klicaj": "!",
@@ -184,14 +229,19 @@
             "afna": "@",
             "strešica": "^",
             "leva poševnica": "\\",
-            "backslash": "\\"
+            "backslash": "\\",
+            "iks": "x",
+            "ipsilon": "y",
+            "dvojni ve": "w",
+            "ku": "q"
           },
           "additionalProperties": {
-              "type": "string"
+            "type": "string"
           }
         },
         "slo-handsfree-coding.numbersName": {
           "type": "object",
+          "scope": "application",
           "description": "Tu lahko spremenite imena števil, ki jih lahko narekujete. Spreminjajte le vrednosti na levi strani. ",
           "default": {
             "nič": "0",
@@ -207,7 +257,7 @@
             "devet": "9"
           },
           "additionalProperties": {
-              "type": "string"
+            "type": "string"
           }
         }
       }
