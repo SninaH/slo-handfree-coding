@@ -53,7 +53,9 @@ export default class Extension {
 
         this.startListeningOnClick = vscode.commands.registerCommand(StatusBarOnClickCommandName, async () => {
             let transcription: string = await this.startListening();
+            //remove tags for emotion recognition and question marks
             transcription = transcription.replace(/<[^>]+>/g, '');
+            transcription = transcription.replace(/⁇/g, '');
             vscode.window.showInformationMessage(transcription);
             //procesiraj ukaz
             let command: dictationMode = await CommandHandler(transcription, this.narekovanje, this.posebniZnaki);

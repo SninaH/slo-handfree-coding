@@ -19,26 +19,36 @@ async function executeFunctionByName(fName: string, args: any[]): Promise<dictat
 }
 
 // Get the function name and its arguments 
-function getNameAndArgs(transcription: string): [string, any[]] { 
+async function getNameAndArgs(transcription: string): Promise<[string, any[]]> { 
+    //TODO add support for multiple commands in one transcription
+    
     //get commands without parameters
-    let commands: { [key: string]: string } = vscode.workspace.getConfiguration('slo-handsfree-coding').get('commandsName') as { [key: string]: string };
-    if(commands.hasOwnProperty(transcription)) {
-        return [commands[transcription], []];
+    const commandsNoParameter: { [key: string]: string } = await vscode.workspace.getConfiguration('slo-handsfree-coding').get('commandsName') as { [key: string]: string };
+    if(commandsNoParameter.hasOwnProperty(transcription)) {
+        console.log(`found command without parameters ${commandsNoParameter[transcription]}`);
+        return [commandsNoParameter[transcription], []];
     }
     //get commands with parameters
-    commands = vscode.workspace.getConfiguration('slo-handsfree-coding').get('commandsWithParametersName') as { [key: string]: string };
-    let objects = vscode.workspace.getConfiguration('slo-handsfree-coding').get('objectsName') as { [key: string]: string };
-    let keywords = vscode.workspace.getConfiguration('slo-handsfree-coding').get('keywordsName') as { [key: string]: string };
+    const commands = await vscode.workspace.getConfiguration('slo-handsfree-coding').get('commandsWithParametersName') as { [key: string]: string };
+    const pyObjects = await vscode.workspace.getConfiguration('slo-handsfree-coding').get('pythonObjectsName') as { [key: string]: string };
+    const vsObjects = await vscode.workspace.getConfiguration('slo-handsfree-coding').get('vscodeObjectsName') as { [key: string]: string };
+    const keywords = await vscode.workspace.getConfiguration('slo-handsfree-coding').get('directionsName') as { [key: string]: string };
+    console.log(`commands: ${commands}`);
+    console.log(`objects: ${pyObjects}`);
+    console.log(`objects: ${vsObjects}`);
+    console.log(`keywords: ${keywords}`);
     for (let key in commands) {
         let idx_substring = transcription.indexOf(key);
         if(idx_substring !== -1) {
             //found command
             //now get the arguments
             let argsString = transcription.substring(idx_substring + key.length).trim(); //get substring after the command
-            argsString = changeKeyWithObjectValue(argsString, objects); //replace objects keys with their values/codes
+            argsString = changeKeyWithObjectValue(argsString, pyObjects); //replace objects keys with their values/codes
+            argsString = changeKeyWithObjectValue(argsString, vsObjects); //replace objects keys with their values/codes
             argsString = changeKeyWithObjectValue(argsString, keywords); //replace keywords keys with their values/codes
             argsString = changeNumbers(argsString); //replace words for numbers with numbers
             let args = argsString.split(/\s+(?=[A-Z0-9])/); //split by space before capital letter or number because values/codes are in uppercase and we want also numbers as parameters
+            console.log(`found command ${commands[key]} and arguments ${args}`);
             return [commands[key], args];
         }
     }
@@ -47,8 +57,8 @@ function getNameAndArgs(transcription: string): [string, any[]] {
 }
 
 function matchStringWithKeysOfValue(s: string, value:string, obj: { [key: string]: string }): boolean {
-    const KeysWithTheValue = Object.keys(obj).filter(key => obj[key] === value);
-    return KeysWithTheValue.some(key => s.includes(key));
+    const KeysWithTheValue: string[] = Object.keys(obj).filter(key => obj[key] === value); //get keys with the value and store them in an array
+    return KeysWithTheValue.some(key => new RegExp(`\\b${key.replace(/ /g, '\\s')}\\b`).test(s)); //check if the string contains any of the keys (keys can have space within them)
 }
 //process the transcription and execute the command
 //return name of command
@@ -60,8 +70,10 @@ export default async function findCommandOffline(transcription: string, narekova
     if(narekovanje && posebniZnaki) {
         const commands = vscode.workspace.getConfiguration('slo-handsfree-coding').get('commandsName') as { [key: string]: string };
         if (matchStringWithKeysOfValue(transcription, "STOP_DICTATING", commands)) {
+            console.log("stop dictating");
             return dictationMode.stop_dictating;
         }else if (matchStringWithKeysOfValue(transcription, "STOP", commands)) {
+            console.log("stop");
             return dictationMode.stop;
         }
         dicMode = dictationMode.dictate;
@@ -69,17 +81,22 @@ export default async function findCommandOffline(transcription: string, narekova
     }else if(narekovanje && !posebniZnaki) {
         const commands = vscode.workspace.getConfiguration('slo-handsfree-coding').get('commandsName') as { [key: string]: string };
         if (matchStringWithKeysOfValue(transcription, "STOP_DICTATING", commands)) {
+            console.log("stop dictating");
             return dictationMode.stop_dictating;
         }else if (matchStringWithKeysOfValue(transcription, "STOP", commands)) {
+            console.log("stop");
             return dictationMode.stop;
         }
         dicMode = dictationMode.dictate_without_special_characters;
+        console.log("currently in dictate mode without special characters");
         await executeFunctionByName('insert_plain_text', [transcription]);
     }
-    else{    
+    else{
+        console.log("currently in command mode");    
         // Get the function name and its arguments
-        const [fName, args] = getNameAndArgs(transcription);
+        const [fName, args] = await getNameAndArgs(transcription);
         if(fName === "") {
+            console.log("no command found");
             return dictationMode.no_command_found;
         }
         // Execute the function based on the command

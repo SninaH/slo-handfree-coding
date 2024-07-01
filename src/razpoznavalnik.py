@@ -5,6 +5,19 @@ from requests.exceptions import ConnectionError
 
 print("start python script")
 
+if len(sys.argv) > 1:
+    link = sys.argv[1]
+else:
+    link = "http://localhost:8000"
+transcribe_link = link + "/api/transcribe"
+health_check_link = link + "/api/healthCheck"
+
+try:
+    result = requests.get(health_check_link)
+except ConnectionError:
+    print("[ERROR] Unable to connect to server")
+    sys.exit(0)
+
 r = sr.Recognizer()
 
 with sr.Microphone() as source:
@@ -14,14 +27,7 @@ with sr.Microphone() as source:
     # with open('speech.wav', 'wb') as f:
     #     f.write(audio.get_wav_data())
 
-if len(sys.argv) > 1:
-    link = sys.argv[1]
-else:
-    link = "http://localhost:8000"
-transcribe_link = link + "/api/transcribe"
-#health_check_link = link + "/api/healthCheck"
 
-#result = requests.get(health_check_link)
 
 try:
     # audioFile = open('audio/speech.wav', 'rb')

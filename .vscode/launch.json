@@ -11,7 +11,7 @@
 			"type": "extensionHost",
 			"request": "launch",
 			"args": [
-				"--profile-temp", 
+				//"--profile-temp", 
 				"--extensionDevelopmentPath=${workspaceFolder}"
 			],
 			"outFiles": [
