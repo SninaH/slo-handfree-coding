@@ -159,13 +159,13 @@
             "prazna vrstica": "BLANK_LINE",
             "prazno vrstico": "BLANK_LINE",
             "zavihek": "TAB",
-            "zavihkov": "TAB",
             "zavihka": "TAB",
             "zavihki": "TAB",
             "zavihke": "TAB",
             "definicija": "DEFINITION",
             "definicijo": "DEFINITION",
-            "definicije": "DEFINITION"
+            "definicije": "DEFINITION",
+            "nazaj": "BACK"
           },
           "additionalProperties": {
             "type": "string"

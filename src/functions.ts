@@ -89,14 +89,10 @@ async function goInDirection(direction: string): Promise<boolean> {
             });
             return true;
         case "NEXT":
-            await vscode.commands.executeCommand('cursorMove', {
-                to: 'nextBlankLine',
-            });
+            await vscode.commands.executeCommand('workbench.action.navigateForward');
             return true;
         case "PREVIOUS":
-            await vscode.commands.executeCommand('cursorMove', {
-                to: 'prevBlankLine',
-            });
+            await vscode.commands.executeCommand('workbench.action.navigateBack');
             return true;
         default:
             return false;
@@ -229,6 +225,37 @@ async function moveObjDir(obj: string, dir: string) {
     }
 }
 
+async function moveDir(obj: string) {
+    switch (obj) {
+        case "LINE":
+            await vscode.commands.executeCommand('cursorMove', {
+                to: 'down',
+                by: 'line',
+            });
+            return true;
+        case "FILE":
+            await vscode.commands.executeCommand('cursorMove', {
+                to: 'viewPortBottom',
+            });
+            return true;
+        case "VIEW_PORT":
+            await vscode.commands.executeCommand('cursorMove', {
+                to: 'viewPortBottom',
+            });
+            return true;
+        case "BLANK_LINE":
+            await vscode.commands.executeCommand('cursorMove', {
+                to: 'nextBlankLine',
+            });
+            return true;
+        case "TAB":
+            await vscode.commands.executeCommand('workbench.action.nextEditor');
+            return true;
+        default:
+            return false;
+    }
+}
+
 async function moveNumDir(num: number, dir: string) {
 
 }
@@ -293,7 +320,7 @@ async function moveNumObjDir(num: number, obj: string, dir: string): Promise<unn
                         to: 'prevBlankLine',
                     });
                     return unneededArgs.none;
-                }else{
+                } else {
                     return unneededArgs.num;
                 }
             case "BLANK_LINE|DOWN":
@@ -302,23 +329,26 @@ async function moveNumObjDir(num: number, obj: string, dir: string): Promise<unn
                         to: 'nextBlankLine',
                     });
                     return unneededArgs.none;
-                }else{
+                } else {
                     return unneededArgs.num;
                 }
             case "TAB|RIGHT":
                 if (num < 9) {
                     await vscode.commands.executeCommand('workbench.action.nextEditor');
                     return unneededArgs.none;
-                }else{
+                } else {
                     return unneededArgs.num;
                 }
             case "TAB|LEFT":
                 if (num < 9) {
                     await vscode.commands.executeCommand('workbench.action.previousEditor');
                     return unneededArgs.none;
-                }else{
+                } else {
                     return unneededArgs.num;
                 }
+            case "LINE|RIGHT":
+            case "LINE|LEFT":
+                return unneededArgs.dir;
             default:
                 return unneededArgs.other;
 
@@ -365,20 +395,27 @@ async function selectLineRange(startLine: number, endLine: number, wholeLine: bo
     }
 }
 
-function findKeywordType(arg: any){
-    if(typeof arg === 'number'){
+/**
+ * Finds the keyword type based on the provided argument.
+ * 
+ * @param arg - The argument to determine the keyword type for.
+ * @returns The keyword type based on the argument. Possible values are: 'number', 'dir', 'vsObj', 'pyObj', 'none'.
+ */
+function findKeywordType(arg: any) {
+
+    if (typeof arg === 'number') {
         return keyword.number;
-    } else if(typeof arg === 'string'){
-        if(directions.includes(arg)){
+    } else if (typeof arg === 'string') {
+        if (directions.includes(arg)) {
             return keyword.dir;
-        }else if(vscodeObjects.includes(arg)){
+        } else if (vscodeObjects.includes(arg)) {
             return keyword.vsObj;
-        }else if(pythonOjects.includes(arg)){
+        } else if (pythonOjects.includes(arg)) {
             return keyword.pyObj;
         }
-    } 
+    }
     return keyword.none;
-    
+
 }
 
 function findKeywordIdx(args: any[], funcType: functionType, startIdx: number = 0): [keyword, number] {
@@ -666,19 +703,18 @@ export const functions = {
             await vscode.commands.executeCommand('editor.debug.action.toggleBreakpoint');
             return dictationMode.other;
         }
-    }
-    
+    },
 
 
-
-
+    ///////////////////////////////////////////////////////
     // from here on are functions with arguments
+    ///////////////////////////////////////////////////////
     // TODO: when adding python object jump feature fix also getNameAndArgs in find-command-offline.ts
     // GO must get only arguments that are numbers, directions or vscode objects
     GO: async (args: any[]): Promise<dictationMode> => {
         console.log("GO");
         console.log(args);
-        
+
         if (args.length < 1) {
             console.error('Invalid arguments for GO. Expected at least 1 argument');
             return dictationMode.execution_failed;
@@ -687,44 +723,52 @@ export const functions = {
                 const arg = args[0];
                 const argType = findKeywordType(arg);
                 if (argType === keyword.number) {
-                    if(args.length === 1){
+                    if (args.length === 1) {
                         moveToLine(arg);
                         break;
                     }
                     const num = arg;
                     let k = findKeywordType(args[1]);
-                    if (k === keyword.vsObj) {
+                    if(k === keyword.number){
+                        //n n
+                        moveToLine(arg);
+                        args = args.slice(1);
+                        continue;
+                    }
+                    else if (k === keyword.vsObj) {
                         let obj = args[1];
                         // we also need a direction
                         let k2 = findKeywordType(args[2]);
                         if (k2 === keyword.none) {
-                            switch (obj) {
+                            if (obj === "LINE") {
                                 // GO n LINE 
-                                case "LINE":
-                                    moveToLine(arg);
-                                    args = args.slice(2);
-                                    break;
+                                moveToLine(arg);
+                                args = args.slice(2);
+                                break;
+                            } else {
                                 // GO n vsObj
-                                default:
-                                    moveToLine(arg);
-                                    args.slice(1);
-                                    break;
+                                moveToLine(arg);
+                                args.slice(1);
                             }
-                        
                         } else if (k2 === keyword.dir) {
                             // num vsObj dir
                             const dir = args[2];
 
                             const unneeded = await moveNumObjDir(num, obj, dir); //move object in direction
-                            if(unneeded === unneededArgs.num  || unneeded === unneededArgs.obj){
+                            if (unneeded === unneededArgs.num || unneeded === unneededArgs.obj) {
                                 moveToLine(num);
                                 args = args.slice(1);
-                            }else if(unneeded === unneededArgs.dir){
+                            } else if (unneeded === unneededArgs.dir) {
+                                //GO 3 LINE LEFT LEFT
                                 moveToLine(num);
-                                args = args.slice(1);
-                                console.log(`There are weird arguments for GO if I say so myself. ${num} ${obj} ${dir} is not a valid direction.`);
+                                if (obj === "LINE") {
+                                    args = args.slice(2);
+                                } else {
+                                    args = args.slice(1);
+                                }
+                                console.log(`There are weird arguments for GO if I say so myself. ${num} ${obj} ${dir}`);
                             }
-                        } else if (k2 === keyword.vsObj){
+                        } else if (k2 === keyword.vsObj) {
                             //n obj obj
                             if (obj === "LINE") {
                                 moveToLine(arg);
@@ -733,10 +777,14 @@ export const functions = {
                                 moveToLine(arg);
                                 args = args.slice(1);
                             }
-                        } else if (k2 === keyword.number){
+                        } else if (k2 === keyword.number) {
                             //n obj n
                             moveToLine(arg);
-                            args = args.slice(1);
+                            if (obj === "LINE") {
+                                args = args.slice(2);
+                            } else {
+                                args = args.slice(1);
+                            }
                         } else {
                             console.error(`something strange happening with GO ${args}`);
                             moveToLine(arg);
@@ -744,6 +792,9 @@ export const functions = {
                         }
 
                     } else if (k === keyword.dir) {
+                        // num dir
+                        const dir = args[1];
+                        let k2 = findKeywordType(args[2]);
 
                     } else {
                         //go to line with number arg
@@ -752,23 +803,23 @@ export const functions = {
 
 
                 } else if (argType === keyword.dir) {
-                    if(args.length === 1){
+                    if (args.length === 1) {
                         await goInDirection(arg);
                         break;
                     }
                     //TODO
                     args = args.slice(1);
                 } else if (argType === keyword.vsObj) {
-                    if(args.length === 1){
-                        if(arg === "DEFINITION"){
+                    if (args.length === 1) {
+                        if (arg === "DEFINITION") {
                             await vscode.commands.executeCommand('editor.action.revealDefinition');
                         }
                         break;
                     }
                     //TODO
                     args = args.slice(1);
-                    
-                }else if (argType === keyword.pyObj) {
+
+                } else if (argType === keyword.pyObj) {
                     args = args.slice(1);
                     //TODO when we add python objects support
                 } else {
