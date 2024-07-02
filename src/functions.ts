@@ -1,5 +1,8 @@
 import * as vscode from 'vscode';
 
+/**
+ * Enum representing the dictation mode.
+ */
 export const enum dictationMode {
     dictate,
     dictate_without_special_characters,
@@ -10,6 +13,10 @@ export const enum dictationMode {
     execution_failed,
     stop_dictating
 }
+
+/**
+ * Enum representing the keyword.
+ */
 enum keyword {
     dir,
     pyObj,
@@ -18,12 +25,22 @@ enum keyword {
     number
 }
 
+/**
+ * Enum representing the function type.
+ */
 enum functionType {
     go,
     select
 }
 
+/**
+ * Array of directions.
+ */
 const directions = ["UP", "DOWN", "LEFT", "RIGHT", "START", "END", "NEXT", "PREVIOUS"];
+
+/**
+ * Array of Python objects.
+ */
 const pythonOjects = [
     "CLASS",
     "CONSTANT",
@@ -46,20 +63,17 @@ const pythonOjects = [
     "WHILE",
     "TYPE"
 ];
+
+/**
+ * Array of VSCode objects.
+ */
 const vscodeObjects = ["LINE", "FILE", "VIEW_PORT", "BLANK_LINE", "TAB", "DEFINITION", "PAGE"];
 
-// function removeElementsByIndexes<T>(array: T[], indexes: number[]): T[] {
-//     // Sort indexes in descending order
-//     const sortedIndexes = indexes.sort((a, b) => b - a);
-
-//     // Remove elements at each index
-//     for (const index of sortedIndexes) {
-//         array.splice(index, 1);
-//     }
-
-//     return array;
-// }
-
+/**
+ * Moves the cursor in the specified direction.
+ * @param direction The direction to move the cursor.
+ * @returns A promise that resolves to a boolean indicating if the cursor was moved successfully.
+ */
 async function goInDirection(direction: string): Promise<boolean> {
     switch (direction) {
         case "UP":
@@ -99,6 +113,12 @@ async function goInDirection(direction: string): Promise<boolean> {
     }
 }
 
+/**
+ * Moves the cursor in the specified direction for a specified number of times.
+ * @param direction The direction to move the cursor.
+ * @param num The number of times to move the cursor.
+ * @returns A promise that resolves to a boolean indicating if the cursor was moved successfully.
+ */
 async function goInDirectionFor(direction: string, num: number): Promise<boolean> {
     switch (direction) {
         case "UP":
@@ -119,10 +139,14 @@ async function goInDirectionFor(direction: string, num: number): Promise<boolean
             return true;
         default:
             return false;
-
     }
 }
 
+/**
+ * Moves the cursor to the specified line number.
+ * @param lineNumber The line number to move the cursor to.
+ * @returns A promise that resolves when the cursor is moved successfully.
+ */
 async function moveToLine(lineNumber: number): Promise<void> {
     const editor = vscode.window.activeTextEditor;
     if (editor) {
@@ -138,8 +162,12 @@ async function moveToLine(lineNumber: number): Promise<void> {
     }
 }
 
-
-
+/**
+ * Moves the specified object in the specified direction.
+ * @param obj The object to move.
+ * @param dir The direction to move the object.
+ * @returns A promise that resolves to a boolean indicating if the object was moved successfully.
+ */
 async function moveObjDir(obj: string, dir: string) {
     switch (obj + "|" + dir) {
         case "LINE|START":
@@ -225,48 +253,51 @@ async function moveObjDir(obj: string, dir: string) {
     }
 }
 
-async function moveDir(obj: string) {
-    switch (obj) {
-        case "LINE":
-            await vscode.commands.executeCommand('cursorMove', {
-                to: 'down',
-                by: 'line',
-            });
-            return true;
-        case "FILE":
-            await vscode.commands.executeCommand('cursorMove', {
-                to: 'viewPortBottom',
-            });
-            return true;
-        case "VIEW_PORT":
-            await vscode.commands.executeCommand('cursorMove', {
-                to: 'viewPortBottom',
-            });
-            return true;
-        case "BLANK_LINE":
-            await vscode.commands.executeCommand('cursorMove', {
-                to: 'nextBlankLine',
-            });
-            return true;
-        case "TAB":
-            await vscode.commands.executeCommand('workbench.action.nextEditor');
-            return true;
-        default:
-            return false;
+/**
+ * Moves the specified object.
+ * @param obj The object to move.
+ * @returns A promise that resolves to a boolean indicating if the object was moved successfully.
+ */
+async function moveObj(obj: string): Promise<boolean> {
+    const editor = vscode.window.activeTextEditor;
+    if (editor) {
+        switch (obj) {
+            // Add cases for moving specific objects
+            default:
+                return false;
+        }
+    } else {
+        console.error('No active editor');
+        return false;
     }
 }
 
+/**
+ * Moves the specified number in the specified direction.
+ * @param num The number to move.
+ * @param dir The direction to move the number.
+ */
 async function moveNumDir(num: number, dir: string) {
-
+    // Implement moving number in the specified direction
 }
+
+
 
 enum unneededArgs {
     num,
     obj,
     dir,
     none,
+    noEditor,
     other
 }
+/**
+ * Moves by specified number by object in direction.
+ * @param num The number to move.
+ * @param obj The object to move.
+ * @param dir The direction to move the number and object.
+ * @returns A promise that resolves to an enum indicating if any arguments are unneeded.
+ */
 async function moveNumObjDir(num: number, obj: string, dir: string): Promise<unneededArgs> {
     const editor = vscode.window.activeTextEditor;
     if (editor) {
@@ -356,12 +387,17 @@ async function moveNumObjDir(num: number, obj: string, dir: string): Promise<unn
 
     } else {
         console.error('No active editor');
+        return unneededArgs.noEditor;
     }
 }
 
 
 
-
+/**
+ * Selects the specified line number.
+ * @param lineNumber The line number to select.
+ * @param wholeLine Optional. If true, selects the whole line. Default is false.
+ */
 async function selectLine(lineNumber: number, wholeLine: boolean = false) {
     const editor = vscode.window.activeTextEditor;
     if (editor) {
@@ -378,6 +414,7 @@ async function selectLine(lineNumber: number, wholeLine: boolean = false) {
         await vscode.commands.executeCommand('editor.action.insertCursorBelow');
     }
 }
+
 
 async function selectLineRange(startLine: number, endLine: number, wholeLine: boolean = false) {
     const editor = vscode.window.activeTextEditor;
@@ -728,17 +765,17 @@ export const functions = {
                         break;
                     }
                     const num = arg;
-                    let k = findKeywordType(args[1]);
-                    if(k === keyword.number){
+                    const k = findKeywordType(args[1]);
+                    if (k === keyword.number) {
                         //n n
                         moveToLine(arg);
                         args = args.slice(1);
                         continue;
                     }
                     else if (k === keyword.vsObj) {
-                        let obj = args[1];
+                        const obj = args[1];
                         // we also need a direction
-                        let k2 = findKeywordType(args[2]);
+                        const k2 = findKeywordType(args[2]);
                         if (k2 === keyword.none) {
                             if (obj === "LINE") {
                                 // GO n LINE 
@@ -794,15 +831,30 @@ export const functions = {
                     } else if (k === keyword.dir) {
                         // num dir
                         const dir = args[1];
-                        let k2 = findKeywordType(args[2]);
+                        const k2: keyword = findKeywordType(args[2]);
+                        if (k2 === keyword.vsObj) {
+                            //num dir vsObj
 
+                        } else {
+                            //num dir num
+                            //num dir dir
+                            //num dir pyobj
+                            //num dir none
+                            goInDirectionFor(dir, num);
+                            args = args.slice(2);
+                        }
                     } else {
                         //go to line with number arg
                         moveToLine(arg);
+                        args = args.slice(1);
+                        console.log(`There are weird arguments for GO if I say so myself so i shall jump to line ${num}: ${args}`);
                     }
 
 
                 } else if (argType === keyword.dir) {
+                    // dir ...
+                    const dir = arg;
+
                     if (args.length === 1) {
                         await goInDirection(arg);
                         break;
