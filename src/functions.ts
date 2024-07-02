@@ -14,7 +14,13 @@ enum keyword {
     dir,
     pyObj,
     vsObj,
-    none
+    none,
+    number
+}
+
+enum functionType {
+    go,
+    select
 }
 
 const directions = ["UP", "DOWN", "LEFT", "RIGHT", "START", "END", "NEXT", "PREVIOUS"];
@@ -40,7 +46,7 @@ const pythonOjects = [
     "WHILE",
     "TYPE"
 ];
-const vscodeObjects = ["LINE", "FILE", "VIEW_PORT", "BLANK_LINE", "TAB"];
+const vscodeObjects = ["LINE", "FILE", "VIEW_PORT", "BLANK_LINE", "TAB", "DEFINITION", "PAGE"];
 
 // function removeElementsByIndexes<T>(array: T[], indexes: number[]): T[] {
 //     // Sort indexes in descending order
@@ -121,12 +127,216 @@ async function goInDirectionFor(direction: string, num: number): Promise<boolean
     }
 }
 
+async function moveToLine(lineNumber: number): Promise<void> {
+    const editor = vscode.window.activeTextEditor;
+    if (editor) {
+        const position = new vscode.Position(lineNumber - 1, 0); // Lines are zero-indexed
+        if (position.isAfterOrEqual(editor.document.lineAt(editor.document.lineCount - 1).range.end)) {
+            // Position is beyond the last line of the document
+            return;
+        }
+        editor.selection = new vscode.Selection(position, position);
+        editor.revealRange(new vscode.Range(position, position)); // Scrolls to the position
+    } else {
+        console.error('No active editor');
+    }
+}
+
+
+
+async function moveObjDir(obj: string, dir: string) {
+    switch (obj + "|" + dir) {
+        case "LINE|START":
+            await vscode.commands.executeCommand('cursorMove', {
+                to: 'wrappedLineFirstNonWhitespaceCharacter',
+            });
+            return true;
+        case "LINE|END":
+            await vscode.commands.executeCommand('cursorMove', {
+                to: 'wrappedLineLastNonWhitespaceCharacter',
+            });
+            return true;
+        case "LINE|UP":
+        case "LINE|PREVIOUS":
+            await vscode.commands.executeCommand('cursorMove', {
+                to: 'up',
+                by: 'line',
+            });
+            return true;
+        case "LINE|NEXT":
+        case "LINE|DOWN":
+            await vscode.commands.executeCommand('cursorMove', {
+                to: 'down',
+                by: 'line',
+            });
+            return true;
+        case "FILE|START":
+            await vscode.commands.executeCommand('cursorMove', {
+                to: 'viewPortTop',
+            });
+            return true;
+        case "FILE|END":
+            await vscode.commands.executeCommand('cursorMove', {
+                to: 'viewPortBottom',
+            });
+            return true;
+        case "VIEW_PORT|START":
+            await vscode.commands.executeCommand('cursorMove', {
+                to: 'viewPortTop',
+            });
+            return true;
+        case "VIEW_PORT|END":
+            await vscode.commands.executeCommand('cursorMove', {
+                to: 'viewPortBottom',
+            });
+            return true;
+        case "PAGE|UP":
+        case "PAGE|PREVIOUS":
+            await vscode.commands.executeCommand('editorScroll', {
+                to: 'up',
+                by: 'page',
+                revealCursor: true
+            });
+        case "PAGE|NEXT":
+        case "PAGE|DOWN":
+            await vscode.commands.executeCommand('editorScroll', {
+                to: 'down',
+                by: 'page',
+                revealCursor: true
+            });
+        case "BLANK_LINE|UP":
+        case "BLANK_LINE|PREVIOUS":
+            await vscode.commands.executeCommand('cursorMove', {
+                to: 'prevBlankLine',
+            });
+            return true;
+        case "BLANK_LINE|DOWN":
+        case "BLANK_LINE|NEXT":
+            await vscode.commands.executeCommand('cursorMove', {
+                to: 'nextBlankLine',
+            });
+            return true;
+        case "TAB|RIGHT":
+        case "TAB|NEXT":
+            await vscode.commands.executeCommand('workbench.action.nextEditor');
+            return true;
+        case "TAB|LEFT":
+        case "TAB|PREVIOUS":
+            await vscode.commands.executeCommand('workbench.action.previousEditor');
+            return true;
+        default:
+            return false;
+    }
+}
+
+async function moveNumDir(num: number, dir: string) {
+
+}
+
+enum unneededArgs {
+    num,
+    obj,
+    dir,
+    none,
+    other
+}
+async function moveNumObjDir(num: number, obj: string, dir: string): Promise<unneededArgs> {
+    const editor = vscode.window.activeTextEditor;
+    if (editor) {
+        switch (dir) {
+            case "START":
+            case "END":
+            case "PREVIOUS":
+            case "NEXT":
+                return unneededArgs.num;
+        }
+        switch (obj) {
+            case "FILE":
+                return unneededArgs.obj;
+        }
+        switch (obj + "|" + dir) {
+            case "LINE|UP":
+                await vscode.commands.executeCommand('cursorMove', {
+                    to: 'up',
+                    by: 'line',
+                    value: num,
+                });
+                return unneededArgs.none;
+            case "LINE|DOWN":
+                await vscode.commands.executeCommand('cursorMove', {
+                    to: 'down',
+                    by: 'line',
+                    value: num,
+                });
+                return unneededArgs.none;
+            case "PAGE|UP":
+                if (num < 9) {
+                    await vscode.commands.executeCommand('editorScroll', {
+                        to: 'up',
+                        by: 'page',
+                        revealCursor: true
+                    });
+                    return unneededArgs.none;
+                } else {
+                    return unneededArgs.num;
+                }
+            case "PAGE|DOWN":
+                await vscode.commands.executeCommand('editorScroll', {
+                    to: 'down',
+                    by: 'page',
+                    revealCursor: true
+                });
+                return unneededArgs.none;
+            case "BLANK_LINE|UP":
+                if (num < 9) {
+                    await vscode.commands.executeCommand('cursorMove', {
+                        to: 'prevBlankLine',
+                    });
+                    return unneededArgs.none;
+                }else{
+                    return unneededArgs.num;
+                }
+            case "BLANK_LINE|DOWN":
+                if (num < 9) {
+                    await vscode.commands.executeCommand('cursorMove', {
+                        to: 'nextBlankLine',
+                    });
+                    return unneededArgs.none;
+                }else{
+                    return unneededArgs.num;
+                }
+            case "TAB|RIGHT":
+                if (num < 9) {
+                    await vscode.commands.executeCommand('workbench.action.nextEditor');
+                    return unneededArgs.none;
+                }else{
+                    return unneededArgs.num;
+                }
+            case "TAB|LEFT":
+                if (num < 9) {
+                    await vscode.commands.executeCommand('workbench.action.previousEditor');
+                    return unneededArgs.none;
+                }else{
+                    return unneededArgs.num;
+                }
+            default:
+                return unneededArgs.other;
+
+        }
+
+    } else {
+        console.error('No active editor');
+    }
+}
+
+
+
 
 async function selectLine(lineNumber: number, wholeLine: boolean = false) {
     const editor = vscode.window.activeTextEditor;
     if (editor) {
         let start = 0;
-        if(wholeLine){
+        if (wholeLine) {
             start = editor.document.lineAt(lineNumber).firstNonWhitespaceCharacterIndex;
         }
         const position = new vscode.Position(lineNumber, start); // Position at the start of the line
@@ -143,7 +353,7 @@ async function selectLineRange(startLine: number, endLine: number, wholeLine: bo
     const editor = vscode.window.activeTextEditor;
     if (editor) {
         let start = 0;
-        if(wholeLine){
+        if (wholeLine) {
             start = editor.document.lineAt(startLine).firstNonWhitespaceCharacterIndex;
         }
         const position = new vscode.Position(startLine, start); // Position at the start of the line
@@ -155,25 +365,54 @@ async function selectLineRange(startLine: number, endLine: number, wholeLine: bo
     }
 }
 
+function findKeywordType(arg: any){
+    if(typeof arg === 'number'){
+        return keyword.number;
+    } else if(typeof arg === 'string'){
+        if(directions.includes(arg)){
+            return keyword.dir;
+        }else if(vscodeObjects.includes(arg)){
+            return keyword.vsObj;
+        }else if(pythonOjects.includes(arg)){
+            return keyword.pyObj;
+        }
+    } 
+    return keyword.none;
+    
+}
 
-
-function findKeywordIdx(args: any[], startIdx: number = 0): [keyword, number] {
+function findKeywordIdx(args: any[], funcType: functionType, startIdx: number = 0): [keyword, number] {
     let foundKeyword: keyword = keyword.none;
     let keywordIdx = -1;
-    for (let i = startIdx; i < args.length; i++) {
-        const arg = args[i];
-        if (directions.includes(arg)) {
-            foundKeyword = keyword.dir;
-            keywordIdx = i;
-            break;
-        } else if (pythonOjects.includes(arg)) {
-            foundKeyword = keyword.pyObj;
-            keywordIdx = i;
-            break;
-        } else if (vscodeObjects.includes(arg)) {
-            foundKeyword = keyword.vsObj;
-            keywordIdx = i;
-            break;
+    if (funcType === functionType.go) {
+        for (let i = startIdx; i < args.length; i++) {
+            const arg = args[i];
+            if (directions.includes(arg)) {
+                foundKeyword = keyword.dir;
+                keywordIdx = i;
+                break;
+            } else if (vscodeObjects.includes(arg)) {
+                foundKeyword = keyword.vsObj;
+                keywordIdx = i;
+                break;
+            }
+        }
+    } else {
+        for (let i = startIdx; i < args.length; i++) {
+            const arg = args[i];
+            if (directions.includes(arg)) {
+                foundKeyword = keyword.dir;
+                keywordIdx = i;
+                break;
+            } else if (pythonOjects.includes(arg)) {
+                foundKeyword = keyword.pyObj;
+                keywordIdx = i;
+                break;
+            } else if (vscodeObjects.includes(arg)) {
+                foundKeyword = keyword.vsObj;
+                keywordIdx = i;
+                break;
+            }
         }
     }
     return [foundKeyword, keywordIdx];
@@ -188,7 +427,10 @@ function findNumberIdx(args: any[], startIdx: number = 0): number {
     return -1;
 }
 
-export const changeKeyWithObjectValue = (text: string, obj: { [key: string]: string }): string => {
+export const changeKeyWithObjectValue = (text: string, obj: { [key: string]: string }, allowedKeywords?: string[]): string => {
+    if (allowedKeywords !== undefined) {
+        obj = Object.fromEntries(Object.entries(obj).filter(([key, value]) => allowedKeywords.includes(value)));
+    }
     //change keys with values so that it prioritizes longer keys (for example 'enojni narekovaj' before 'narekovaj')
     const keysSortedByLengthDesc = Object.keys(obj).sort((a, b) => b.length - a.length);
     const regex = new RegExp(keysSortedByLengthDesc.join('|'), 'g');
@@ -288,6 +530,7 @@ export const functions = {
             return dictationMode.other;
         }
     },
+    // close tab like Ctrl + W
     CLOSE_TAB: async (args: any[]): Promise<dictationMode> => {
         if (args.length !== 0) {
             console.error('Invalid arguments for SETTINGS. Expected 0 arguments');
@@ -415,53 +658,132 @@ export const functions = {
         }
     },
 
-    // from here on are functions with arguments
+    BREAKPOINT: async (args: any[]): Promise<dictationMode> => {
+        if (args.length !== 0) {
+            console.error('Invalid arguments for BREAKPOINT. Expected 0 arguments');
+            return dictationMode.execution_failed;
+        } else {
+            await vscode.commands.executeCommand('editor.debug.action.toggleBreakpoint');
+            return dictationMode.other;
+        }
+    }
+    
 
+
+
+
+    // from here on are functions with arguments
+    // TODO: when adding python object jump feature fix also getNameAndArgs in find-command-offline.ts
+    // GO must get only arguments that are numbers, directions or vscode objects
     GO: async (args: any[]): Promise<dictationMode> => {
         console.log("GO");
         console.log(args);
+        
         if (args.length < 1) {
             console.error('Invalid arguments for GO. Expected at least 1 argument');
             return dictationMode.execution_failed;
         } else {
-            // while (args.length > 0) {
-            //     const arg = args[0];
-            //     if (typeof arg === 'number') {
-            //         let [k, idx] = findKeywordIdx(args);
-            //         if (k === keyword.pyObj){
-            //             // we cannot move by number of python objects
-            //             console.error(`Invalid arguments for GO: ${arg} ${args[idx]}.`);
-            //             // TODO: fix when we implement moving to python objects
-            //             args = args.slice(idx + 1);
-            //             continue;
-            //         } else if (k === keyword.vsObj){
-            //             // we also need a direction
-            //             let [k2, idx2] = findKeywordIdx(args, idx + 1);
+            while (args.length > 0) {
+                const arg = args[0];
+                const argType = findKeywordType(arg);
+                if (argType === keyword.number) {
+                    if(args.length === 1){
+                        moveToLine(arg);
+                        break;
+                    }
+                    const num = arg;
+                    let k = findKeywordType(args[1]);
+                    if (k === keyword.vsObj) {
+                        let obj = args[1];
+                        // we also need a direction
+                        let k2 = findKeywordType(args[2]);
+                        if (k2 === keyword.none) {
+                            switch (obj) {
+                                // GO n LINE 
+                                case "LINE":
+                                    moveToLine(arg);
+                                    args = args.slice(2);
+                                    break;
+                                // GO n vsObj
+                                default:
+                                    moveToLine(arg);
+                                    args.slice(1);
+                                    break;
+                            }
+                        
+                        } else if (k2 === keyword.dir) {
+                            // num vsObj dir
+                            const dir = args[2];
 
-            //         }
+                            const unneeded = await moveNumObjDir(num, obj, dir); //move object in direction
+                            if(unneeded === unneededArgs.num  || unneeded === unneededArgs.obj){
+                                moveToLine(num);
+                                args = args.slice(1);
+                            }else if(unneeded === unneededArgs.dir){
+                                moveToLine(num);
+                                args = args.slice(1);
+                                console.log(`There are weird arguments for GO if I say so myself. ${num} ${obj} ${dir} is not a valid direction.`);
+                            }
+                        } else if (k2 === keyword.vsObj){
+                            //n obj obj
+                            if (obj === "LINE") {
+                                moveToLine(arg);
+                                args = args.slice(2);
+                            } else {
+                                moveToLine(arg);
+                                args = args.slice(1);
+                            }
+                        } else if (k2 === keyword.number){
+                            //n obj n
+                            moveToLine(arg);
+                            args = args.slice(1);
+                        } else {
+                            console.error(`something strange happening with GO ${args}`);
+                            moveToLine(arg);
+                            args = args.slice(1);
+                        }
+
+                    } else if (k === keyword.dir) {
+
+                    } else {
+                        //go to line with number arg
+                        moveToLine(arg);
+                    }
 
 
-            //     } else if (directions.includes(arg)) {
-            //         // Remove the direction from the arguments
-            //         args = removeElementsByIndexes(args, [0]);
-            //     } else if (pythonOjects.includes(arg)) {
-            //         // Remove the python object from the arguments
-            //         args = removeElementsByIndexes(args, [0]);
-            //     } else if (vscodeObjects.includes(arg)) {
-            //         // Remove the vscode object from the arguments
-            //         args = removeElementsByIndexes(args, [0]);
-            //     } else {
-
-            //     }
-            // }
+                } else if (argType === keyword.dir) {
+                    if(args.length === 1){
+                        await goInDirection(arg);
+                        break;
+                    }
+                    //TODO
+                    args = args.slice(1);
+                } else if (argType === keyword.vsObj) {
+                    if(args.length === 1){
+                        if(arg === "DEFINITION"){
+                            await vscode.commands.executeCommand('editor.action.revealDefinition');
+                        }
+                        break;
+                    }
+                    //TODO
+                    args = args.slice(1);
+                    
+                }else if (argType === keyword.pyObj) {
+                    args = args.slice(1);
+                    //TODO when we add python objects support
+                } else {
+                    args = args.slice(1);
+                }
+            }
 
             ///////////////////////////
+            /*
             let nums: [string, number][] = [];
             let dirs: [string, number][] = [];
             let pyObjs: [string, number][] = [];
             let vsObjs: [string, number][] = [];
             let keywordIdxs: number[] = [];
-
+ 
             for (let i = 0; i < args.length; i++) {
                 const arg = args[i];
                 if (typeof arg === 'number') {
@@ -477,7 +799,7 @@ export const functions = {
                     keywordIdxs.push(i);
                 }
             }
-
+ 
             if (dirs.length > 0 && pyObjs.length === 0 && vsObjs.length === 0) {
                 //go in direction
                 //because there is no vscode object or python object, we assume that we always move by character if left right and line if up down
@@ -507,7 +829,7 @@ export const functions = {
                                     console.error(`Invalid arguments for GO. ${mergedArray[0][0]} ${num} is not a valid direction.`);
                                     mergedArray = mergedArray.slice(2);
                                 }
-
+ 
                             }
                         }else{
                             //we have number and direction
@@ -527,15 +849,16 @@ export const functions = {
                         }
                     }   
                 }
-
+ 
                 return dictationMode.other;
-
+ 
             } else if (pyObjs.length === 0 && dirs.length === 0 && vsObjs.length === 0) {
                 console.error('Invalid arguments for GO. Expected at least one direction or object.');
                 return dictationMode.execution_failed;
             } else {
-
+ 
             }
+            */
             ////////////////////////////
 
             return dictationMode.other;
@@ -549,11 +872,14 @@ export const functions = {
         //     select: true
         // });
     },
+
+
+    /*
     SELECT: async (args: any[]): Promise<dictationMode> => {
         console.log("SELECT");
         console.log(args);
         const editor = vscode.window.activeTextEditor;
-        if(!editor){
+        if (!editor) {
             console.error('No active editor');
             return dictationMode.execution_failed;
         }
@@ -565,37 +891,38 @@ export const functions = {
                 let [k, idx] = findKeywordIdx(args);
                 let [k2, idx2] = findKeywordIdx(args, idx + 1);
                 let numIdx = findNumberIdx(args);
-                if(k === keyword.none){
+                if (k === keyword.none) {
                     console.error('Invalid arguments for SELECT. Expected at least one direction or object.');
                     return dictationMode.execution_failed;
                 }
-                if (k === keyword.vsObj){
-                    switch(args[idx]){
+                if (k === keyword.vsObj) {
+                    switch (args[idx]) {
                         case "LINE":
-                            if(numIdx !== -1){
-                                if(numIdx < idx2){
+                            if (numIdx !== -1) {
+                                if (numIdx < idx2) {
                                     let numIdx2 = findNumberIdx(args, numIdx + 1);
-                                    if(numIdx2 !== -1){
+                                    if (numIdx2 !== -1) {
                                         selectLine(args[numIdx], true);
                                     }
                                 }
-                            }else{
-                            selectLine(editor.selection.active.line);
+                            } else {
+                                selectLine(editor.selection.active.line);
                             }
                             break;
                         case "FILE":
                             await vscode.commands.executeCommand('editor.action.selectAll');
                             break;
-                        
+
                     }
                     //TODO
                     args = args.slice(idx + 1);
-                }else{
+                } else {
                     args = args.slice(idx + 1);
                 }
             }
             return dictationMode.other;
         }
     }
+    */
 
 };

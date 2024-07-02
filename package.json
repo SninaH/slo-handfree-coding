@@ -76,7 +76,8 @@
             "uveljavi": "REDO",
             "naprej": "REDO",
             "formatiraj": "FORMAT",
-            "polepšaj": "FORMAT"
+            "polepšaj": "FORMAT",
+            "prekinitvena točka": "BREAKPOINT"
           },
           "additionalProperties": {
             "type": "string"
@@ -97,6 +98,7 @@
             "brisanje": "DELETE",
             "briši": "DELETE",
             "pojdi": "GO",
+            "go": "GO",
             "premakni": "MOVE"
           },
           "additionalProperties": {
@@ -131,7 +133,12 @@
             "tip": "TYPE",
             "spremenljivka": "VARIABLE",
             "vrednost": "VALUE",
-            "dokler": "WHILE"
+            "dokler": "WHILE",
+            "zanka": "FOR",
+            "for": "FOR",
+            "v": "IN",
+            "za vsak": "FOR_EACH"
+
           },
           "additionalProperties": {
             "type": "string"
@@ -147,13 +154,18 @@
             "vrstica": "LINE",
             "vrstico": "LINE",
             "vidno polje": "VIEW_PORT",
+            "vidnega polja": "VIEW_PORT",
+            "stran": "PAGE",
             "prazna vrstica": "BLANK_LINE",
             "prazno vrstico": "BLANK_LINE",
             "zavihek": "TAB",
             "zavihkov": "TAB",
             "zavihka": "TAB",
             "zavihki": "TAB",
-            "zavihke": "TAB"
+            "zavihke": "TAB",
+            "definicija": "DEFINITION",
+            "definicijo": "DEFINITION",
+            "definicije": "DEFINITION"
           },
           "additionalProperties": {
             "type": "string"
@@ -173,10 +185,12 @@
             "naslednji": "NEXT",
             "naslednja": "NEXT",
             "naslednje": "NEXT",
+            "naslednjo": "NEXT",
             "naprej": "NEXT",
             "prejšnji": "PREVIOUS",
             "prejšnja": "PREVIOUS",
             "prejšnje": "PREVIOUS",
+            "prejšnjo": "PREVIOUS",
             "nazaj": "PREVIOUS"
           },
           "additionalProperties": {
