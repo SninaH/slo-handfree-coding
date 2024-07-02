@@ -164,8 +164,7 @@
             "zavihke": "TAB",
             "definicija": "DEFINITION",
             "definicijo": "DEFINITION",
-            "definicije": "DEFINITION",
-            "nazaj": "BACK"
+            "definicije": "DEFINITION"
           },
           "additionalProperties": {
             "type": "string"
