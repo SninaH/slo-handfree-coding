@@ -390,6 +390,36 @@ async function moveNumObjDir(num: number, obj: string, dir: string): Promise<unn
     }
 }
 
+/*
+* Check if num arg1 arg2 or num arg1 is an action
+*/
+function validateNumArgs(arg1: string, arg2?: string): boolean {
+    const kT1 = findKeywordType(arg1);
+    if (kT1 === keywordType.number) {
+        return false;
+    }
+    else if (kT1 === keywordType.vsObj) {
+        const validCombinations = [
+            "LINE|UP", "LINE|DOWN", "PAGE|UP", "PAGE|DOWN",
+            "BLANK_LINE|UP", "BLANK_LINE|DOWN", "TAB|RIGHT", "TAB|LEFT",
+            "LINE|RIGHT", "LINE|LEFT"
+        ];
+        if (arg2 && findKeywordType(arg2) === keywordType.dir && validCombinations.includes(`${arg1}|${arg2}`)) {
+            return true;
+        }
+        return false;
+    }
+    else {
+        //only check left is num arg1
+        if (kT1 === keywordType.dir) {
+            const validNumDir = ["UP", "DOWN", "LEFT", "RIGHT"];
+            return validNumDir.includes(arg1);
+        }
+
+        return false;
+    }
+}
+
 async function executeAction1(kT0: keywordType, arg: any): Promise<moveSuccess> {
     try {
         let actionResult: moveSuccess;
@@ -714,7 +744,50 @@ export default async function GO(args: any[]): Promise<dictationMode> {
                 //TODO check if kT2 is num then it could be next keyword combination's num
                 //npr. 2 LEFT 3 DOWN => 2 LEFT ; 3 DOWN
                 // (we prioritise numbers that are before dir or obj)
-            }else{
+                
+                if(kT2 === keywordType.number){
+                    if(args.length > 4 && validateNumArgs(args[3], args[4]) || validateNumArgs(args[3])){
+                        //args[3] is next keyword combination's num
+                        const result: moveSuccess = await executeAction2(kT0, kT1, args);
+                        switch (result) {
+                            case moveSuccess.success:
+                                // Adjust args according to the action taken
+                                args = args.slice((kT0 !== kT1) ? 2 : 1);
+                                break;
+                            case moveSuccess.invalid_arg:
+                                console.error(`Invalid arguments for GO: ${args}`);
+                                return dictationMode.execution_failed;
+                            case moveSuccess.no_editor:
+                                console.error('No active editor');
+                                return dictationMode.execution_failed;
+                            case moveSuccess.error:
+                                return dictationMode.execution_failed;
+                        }
+                    } else {
+                        const result: moveSuccess3 = await executeAction3(kT0, kT1, kT2, args);
+                        switch (result) {
+                            case moveSuccess3.used1:
+                                args = args.slice(1);
+                                break;
+                            case moveSuccess3.used2:
+                                args = args.slice(2);
+                                break;
+                            case moveSuccess3.used_all:
+                                args = args.slice(3);
+                                break;
+                            case moveSuccess3.no_editor:
+                                console.error('No active editor');
+                                return dictationMode.execution_failed;
+                            case moveSuccess3.invalid_arg:
+                                console.error(`Invalid arguments for GO: ${args}`);
+                                return dictationMode.execution_failed;
+                            case moveSuccess3.error:
+                                return dictationMode.execution_failed;
+                        }
+                    }
+
+                }
+            } else {
                 const result: moveSuccess3 = await executeAction3(kT0, kT1, kT2, args);
                 switch (result) {
                     case moveSuccess3.used1:
