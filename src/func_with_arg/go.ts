@@ -5,7 +5,8 @@ import { directions, vscodeObjects, pythonOjects, keywordType, findKeywordType }
 enum moveSuccess {
     success,
     invalid_arg,
-    no_editor
+    no_editor,
+    error
 }
 /**
  * Moves the cursor to the specified line number.
@@ -13,19 +14,24 @@ enum moveSuccess {
  * @returns A promise that resolves when the cursor is moved successfully.
  */
 function moveToLine(lineNumber: number): moveSuccess {
-    const editor = vscode.window.activeTextEditor;
-    if (editor) {
-        const position = new vscode.Position(lineNumber - 1, 0); // Lines are zero-indexed
-        if (position.isAfterOrEqual(editor.document.lineAt(editor.document.lineCount - 1).range.end)) {
-            // Position is beyond the last line of the document
-            return moveSuccess.invalid_arg;
+    try {
+        const editor = vscode.window.activeTextEditor;
+        if (editor) {
+            const position = new vscode.Position(lineNumber - 1, 0); // Lines are zero-indexed
+            if (position.isAfterOrEqual(editor.document.lineAt(editor.document.lineCount - 1).range.end)) {
+                // Position is beyond the last line of the document
+                return moveSuccess.invalid_arg;
+            }
+            editor.selection = new vscode.Selection(position, position);
+            editor.revealRange(new vscode.Range(position, position)); // Scrolls to the position
+            return moveSuccess.success;
+        } else {
+            console.error('No active editor');
+            return moveSuccess.no_editor;
         }
-        editor.selection = new vscode.Selection(position, position);
-        editor.revealRange(new vscode.Range(position, position)); // Scrolls to the position
-        return moveSuccess.success;
-    } else {
-        console.error('No active editor');
-        return moveSuccess.no_editor;
+    } catch (error) {
+        console.error(`Error moving to line: ${error}`);
+        return moveSuccess.error;
     }
 }
 
@@ -36,46 +42,51 @@ function moveToLine(lineNumber: number): moveSuccess {
  */
 
 async function moveDir(direction: string): Promise<moveSuccess> {
-    const editor = vscode.window.activeTextEditor;
-    if (!editor) {
-        console.error('No active editor');
-        return moveSuccess.no_editor;
-    }
-    switch (direction) {
-        case "UP":
-        case "DOWN":
-            await vscode.commands.executeCommand('cursorMove', {
-                to: direction.toLowerCase(),
-                by: 'line',
-                value: 1,
-            });
-            return moveSuccess.success;
-        case "LEFT":
-        case "RIGHT":
-            await vscode.commands.executeCommand('cursorMove', {
-                to: direction.toLowerCase(),
-                by: 'character',
-                value: 1,
-            });
-            return moveSuccess.success;
-        case "START":
-            await vscode.commands.executeCommand('cursorMove', {
-                to: 'wrappedLineStart',
-            });
-            return moveSuccess.success;
-        case "END":
-            await vscode.commands.executeCommand('cursorMove', {
-                to: 'wrappedLineEnd',
-            });
-            return moveSuccess.success;
-        case "NEXT":
-            await vscode.commands.executeCommand('workbench.action.navigateForward');
-            return moveSuccess.success;
-        case "PREVIOUS":
-            await vscode.commands.executeCommand('workbench.action.navigateBack');
-            return moveSuccess.success;
-        default:
-            return moveSuccess.invalid_arg;
+    try {
+        const editor = vscode.window.activeTextEditor;
+        if (!editor) {
+            console.error('No active editor');
+            return moveSuccess.no_editor;
+        }
+        switch (direction) {
+            case "UP":
+            case "DOWN":
+                await vscode.commands.executeCommand('cursorMove', {
+                    to: direction.toLowerCase(),
+                    by: 'line',
+                    value: 1,
+                });
+                return moveSuccess.success;
+            case "LEFT":
+            case "RIGHT":
+                await vscode.commands.executeCommand('cursorMove', {
+                    to: direction.toLowerCase(),
+                    by: 'character',
+                    value: 1,
+                });
+                return moveSuccess.success;
+            case "START":
+                await vscode.commands.executeCommand('cursorMove', {
+                    to: 'wrappedLineStart',
+                });
+                return moveSuccess.success;
+            case "END":
+                await vscode.commands.executeCommand('cursorMove', {
+                    to: 'wrappedLineEnd',
+                });
+                return moveSuccess.success;
+            case "NEXT":
+                await vscode.commands.executeCommand('workbench.action.navigateForward');
+                return moveSuccess.success;
+            case "PREVIOUS":
+                await vscode.commands.executeCommand('workbench.action.navigateBack');
+                return moveSuccess.success;
+            default:
+                return moveSuccess.invalid_arg;
+        }
+    } catch (error) {
+        console.error(`Error moving in direction: ${error}`);
+        return moveSuccess.error;
     }
 }
 
@@ -85,17 +96,22 @@ async function moveDir(direction: string): Promise<moveSuccess> {
  * @returns A promise that resolves to a boolean indicating if the object was moved successfully.
  */
 async function moveObj(obj: string): Promise<moveSuccess> {
-    const editor = vscode.window.activeTextEditor;
-    if (editor) {
-        switch (obj) {
-            case "DEFINITION":
-                return moveSuccess.success;
-            default:
-                return moveSuccess.invalid_arg;
+    try {
+        const editor = vscode.window.activeTextEditor;
+        if (editor) {
+            switch (obj) {
+                case "DEFINITION":
+                    return moveSuccess.success;
+                default:
+                    return moveSuccess.invalid_arg;
+            }
+        } else {
+            console.error('No active editor');
+            return moveSuccess.no_editor;
         }
-    } else {
-        console.error('No active editor');
-        return moveSuccess.no_editor;
+    } catch (error) {
+        console.error(`Error moving to object: ${error}`);
+        return moveSuccess.error;
     }
 }
 
@@ -106,44 +122,54 @@ async function moveObj(obj: string): Promise<moveSuccess> {
  * @returns A promise that resolves to a boolean indicating if the cursor was moved successfully.
  */
 async function moveNumDir(num: number, direction: string): Promise<moveSuccess> {
-    const editor = vscode.window.activeTextEditor;
-    if (!editor) {
-        console.error('No active editor');
-        return moveSuccess.no_editor;
-    }
-    switch (direction) {
-        case "UP":
-        case "DOWN":
-            await vscode.commands.executeCommand('cursorMove', {
-                to: direction.toLowerCase(),
-                by: 'line',
-                value: num,
-            });
-            return moveSuccess.success;
-        case "LEFT":
-        case "RIGHT":
-            await vscode.commands.executeCommand('cursorMove', {
-                to: direction.toLowerCase(),
-                by: 'character',
-                value: num,
-            });
-            return moveSuccess.success;
-        default:
-            return moveSuccess.invalid_arg;
+    try {
+        const editor = vscode.window.activeTextEditor;
+        if (!editor) {
+            console.error('No active editor');
+            return moveSuccess.no_editor;
+        }
+        switch (direction) {
+            case "UP":
+            case "DOWN":
+                await vscode.commands.executeCommand('cursorMove', {
+                    to: direction.toLowerCase(),
+                    by: 'line',
+                    value: num,
+                });
+                return moveSuccess.success;
+            case "LEFT":
+            case "RIGHT":
+                await vscode.commands.executeCommand('cursorMove', {
+                    to: direction.toLowerCase(),
+                    by: 'character',
+                    value: num,
+                });
+                return moveSuccess.success;
+            default:
+                return moveSuccess.invalid_arg;
+        }
+    } catch (error) {
+        console.error(`Error moving in direction by number: ${error}`);
+        return moveSuccess.error;
     }
 }
 
 async function moveNumObj(num: number, obj: string): Promise<moveSuccess> {
-    const editor = vscode.window.activeTextEditor;
-    if (!editor) {
-        console.error('No active editor');
-        return moveSuccess.no_editor;
-    }
-    switch (obj) {
-        case "LINE":
-            return moveToLine(num);
-        default:
-            return moveSuccess.invalid_arg;
+    try {
+        const editor = vscode.window.activeTextEditor;
+        if (!editor) {
+            console.error('No active editor');
+            return moveSuccess.no_editor;
+        }
+        switch (obj) {
+            case "LINE":
+                return moveToLine(num);
+            default:
+                return moveSuccess.invalid_arg;
+        }
+    } catch (error) {
+        console.error(`Error moving to object by number: ${error}`);
+        return moveSuccess.error;
     }
 }
 
@@ -154,89 +180,94 @@ async function moveNumObj(num: number, obj: string): Promise<moveSuccess> {
  * @returns A promise that resolves to a boolean indicating if the object was moved successfully.
  */
 async function moveObjDir(obj: string, dir: string): Promise<moveSuccess> {
-    switch (obj + "|" + dir) {
-        case "LINE|START":
-            await vscode.commands.executeCommand('cursorMove', {
-                to: 'wrappedLineFirstNonWhitespaceCharacter',
-            });
-            return moveSuccess.success;
-        case "LINE|END":
-            await vscode.commands.executeCommand('cursorMove', {
-                to: 'wrappedLineLastNonWhitespaceCharacter',
-            });
-            return moveSuccess.success;
-        case "LINE|UP":
-        case "LINE|PREVIOUS":
-            await vscode.commands.executeCommand('cursorMove', {
-                to: 'up',
-                by: 'line',
-            });
-            return moveSuccess.success;
-        case "LINE|NEXT":
-        case "LINE|DOWN":
-            await vscode.commands.executeCommand('cursorMove', {
-                to: 'down',
-                by: 'line',
-            });
-            return moveSuccess.success;
-        case "FILE|START":
-            await vscode.commands.executeCommand('cursorMove', {
-                to: 'viewPortTop',
-            });
-            return moveSuccess.success;
-        case "FILE|END":
-            await vscode.commands.executeCommand('cursorMove', {
-                to: 'viewPortBottom',
-            });
-            return moveSuccess.success;
-        case "VIEW_PORT|START":
-            await vscode.commands.executeCommand('cursorMove', {
-                to: 'viewPortTop',
-            });
-            return moveSuccess.success;
-        case "VIEW_PORT|END":
-            await vscode.commands.executeCommand('cursorMove', {
-                to: 'viewPortBottom',
-            });
-            return moveSuccess.success;
-        case "PAGE|UP":
-        case "PAGE|PREVIOUS":
-            await vscode.commands.executeCommand('editorScroll', {
-                to: 'up',
-                by: 'page',
-                revealCursor: true
-            });
-            return moveSuccess.success;
-        case "PAGE|NEXT":
-        case "PAGE|DOWN":
-            await vscode.commands.executeCommand('editorScroll', {
-                to: 'down',
-                by: 'page',
-                revealCursor: true
-            });
-            return moveSuccess.success;
-        case "BLANK_LINE|UP":
-        case "BLANK_LINE|PREVIOUS":
-            await vscode.commands.executeCommand('cursorMove', {
-                to: 'prevBlankLine',
-            });
-            return moveSuccess.success;
-        case "BLANK_LINE|DOWN":
-        case "BLANK_LINE|NEXT":
-            await vscode.commands.executeCommand('cursorMove', {
-                to: 'nextBlankLine',
-            });
-            return moveSuccess.success;
-        case "TAB|RIGHT":
-        case "TAB|NEXT":
-            await vscode.commands.executeCommand('workbench.action.nextEditor');
-            return moveSuccess.success;
-        case "TAB|LEFT":
-        case "TAB|PREVIOUS":
-            await vscode.commands.executeCommand('workbench.action.previousEditor');
-            return moveSuccess.success;
-        default:
-            return moveSuccess.invalid_arg;
+    try {
+        switch (obj + "|" + dir) {
+            case "LINE|START":
+                await vscode.commands.executeCommand('cursorMove', {
+                    to: 'wrappedLineFirstNonWhitespaceCharacter',
+                });
+                return moveSuccess.success;
+            case "LINE|END":
+                await vscode.commands.executeCommand('cursorMove', {
+                    to: 'wrappedLineLastNonWhitespaceCharacter',
+                });
+                return moveSuccess.success;
+            case "LINE|UP":
+            case "LINE|PREVIOUS":
+                await vscode.commands.executeCommand('cursorMove', {
+                    to: 'up',
+                    by: 'line',
+                });
+                return moveSuccess.success;
+            case "LINE|NEXT":
+            case "LINE|DOWN":
+                await vscode.commands.executeCommand('cursorMove', {
+                    to: 'down',
+                    by: 'line',
+                });
+                return moveSuccess.success;
+            case "FILE|START":
+                await vscode.commands.executeCommand('cursorMove', {
+                    to: 'viewPortTop',
+                });
+                return moveSuccess.success;
+            case "FILE|END":
+                await vscode.commands.executeCommand('cursorMove', {
+                    to: 'viewPortBottom',
+                });
+                return moveSuccess.success;
+            case "VIEW_PORT|START":
+                await vscode.commands.executeCommand('cursorMove', {
+                    to: 'viewPortTop',
+                });
+                return moveSuccess.success;
+            case "VIEW_PORT|END":
+                await vscode.commands.executeCommand('cursorMove', {
+                    to: 'viewPortBottom',
+                });
+                return moveSuccess.success;
+            case "PAGE|UP":
+            case "PAGE|PREVIOUS":
+                await vscode.commands.executeCommand('editorScroll', {
+                    to: 'up',
+                    by: 'page',
+                    revealCursor: true
+                });
+                return moveSuccess.success;
+            case "PAGE|NEXT":
+            case "PAGE|DOWN":
+                await vscode.commands.executeCommand('editorScroll', {
+                    to: 'down',
+                    by: 'page',
+                    revealCursor: true
+                });
+                return moveSuccess.success;
+            case "BLANK_LINE|UP":
+            case "BLANK_LINE|PREVIOUS":
+                await vscode.commands.executeCommand('cursorMove', {
+                    to: 'prevBlankLine',
+                });
+                return moveSuccess.success;
+            case "BLANK_LINE|DOWN":
+            case "BLANK_LINE|NEXT":
+                await vscode.commands.executeCommand('cursorMove', {
+                    to: 'nextBlankLine',
+                });
+                return moveSuccess.success;
+            case "TAB|RIGHT":
+            case "TAB|NEXT":
+                await vscode.commands.executeCommand('workbench.action.nextEditor');
+                return moveSuccess.success;
+            case "TAB|LEFT":
+            case "TAB|PREVIOUS":
+                await vscode.commands.executeCommand('workbench.action.previousEditor');
+                return moveSuccess.success;
+            default:
+                return moveSuccess.invalid_arg;
+        }
+    } catch (error) {
+        console.error(`Error moving by object in direction: ${error}`);
+        return moveSuccess.error;
     }
 }
 
@@ -250,8 +281,10 @@ enum unneededArgs {
     dir,
     none,
     noEditor,
-    other
+    invalid_arg,
+    error
 }
+
 /**
  * Moves by specified number by object in direction.
  * @param num The number to move.
@@ -260,102 +293,106 @@ enum unneededArgs {
  * @returns A promise that resolves to an enum indicating if any arguments are unneeded.
  */
 async function moveNumObjDir(num: number, obj: string, dir: string): Promise<unneededArgs> {
-    const editor = vscode.window.activeTextEditor;
-    if (editor) {
-        switch (dir) {
-            case "START":
-            case "END":
-            case "PREVIOUS":
-            case "NEXT":
-                return unneededArgs.num;
-        }
-        switch (obj) {
-            case "FILE":
-                return unneededArgs.obj;
-        }
-        switch (obj + "|" + dir) {
-            case "LINE|UP":
-                await vscode.commands.executeCommand('cursorMove', {
-                    to: 'up',
-                    by: 'line',
-                    value: num,
-                });
-                return unneededArgs.none;
-            case "LINE|DOWN":
-                await vscode.commands.executeCommand('cursorMove', {
-                    to: 'down',
-                    by: 'line',
-                    value: num,
-                });
-                return unneededArgs.none;
-            case "PAGE|UP":
-                if (num < 9) {
-                    await vscode.commands.executeCommand('editorScroll', {
+    try {
+        const editor = vscode.window.activeTextEditor;
+        if (editor) {
+            switch (dir) {
+                case "START":
+                case "END":
+                case "PREVIOUS":
+                case "NEXT":
+                    return unneededArgs.num;
+            }
+            switch (obj) {
+                case "FILE":
+                    return unneededArgs.obj;
+            }
+            switch (obj + "|" + dir) {
+                case "LINE|UP":
+                    await vscode.commands.executeCommand('cursorMove', {
                         to: 'up',
+                        by: 'line',
+                        value: num,
+                    });
+                    return unneededArgs.none;
+                case "LINE|DOWN":
+                    await vscode.commands.executeCommand('cursorMove', {
+                        to: 'down',
+                        by: 'line',
+                        value: num,
+                    });
+                    return unneededArgs.none;
+                case "PAGE|UP":
+                    if (num < 9) {
+                        await vscode.commands.executeCommand('editorScroll', {
+                            to: 'up',
+                            by: 'page',
+                            revealCursor: true
+                        });
+                        return unneededArgs.none;
+                    } else {
+                        return unneededArgs.num;
+                    }
+                case "PAGE|DOWN":
+                    await vscode.commands.executeCommand('editorScroll', {
+                        to: 'down',
                         by: 'page',
                         revealCursor: true
                     });
                     return unneededArgs.none;
-                } else {
-                    return unneededArgs.num;
-                }
-            case "PAGE|DOWN":
-                await vscode.commands.executeCommand('editorScroll', {
-                    to: 'down',
-                    by: 'page',
-                    revealCursor: true
-                });
-                return unneededArgs.none;
-            case "BLANK_LINE|UP":
-                if (num < 9) {
-                    await vscode.commands.executeCommand('cursorMove', {
-                        to: 'prevBlankLine',
-                    });
-                    return unneededArgs.none;
-                } else {
-                    return unneededArgs.num;
-                }
-            case "BLANK_LINE|DOWN":
-                if (num < 9) {
-                    await vscode.commands.executeCommand('cursorMove', {
-                        to: 'nextBlankLine',
-                    });
-                    return unneededArgs.none;
-                } else {
-                    return unneededArgs.num;
-                }
-            case "TAB|RIGHT":
-                if (num < 9) {
-                    await vscode.commands.executeCommand('workbench.action.nextEditor');
-                    return unneededArgs.none;
-                } else {
-                    return unneededArgs.num;
-                }
-            case "TAB|LEFT":
-                if (num < 9) {
-                    await vscode.commands.executeCommand('workbench.action.previousEditor');
-                    return unneededArgs.none;
-                } else {
-                    return unneededArgs.num;
-                }
-            case "LINE|RIGHT":
-            case "LINE|LEFT":
-                return unneededArgs.dir;
-            default:
-                return unneededArgs.other;
+                case "BLANK_LINE|UP":
+                    if (num < 9) {
+                        await vscode.commands.executeCommand('cursorMove', {
+                            to: 'prevBlankLine',
+                        });
+                        return unneededArgs.none;
+                    } else {
+                        return unneededArgs.num;
+                    }
+                case "BLANK_LINE|DOWN":
+                    if (num < 9) {
+                        await vscode.commands.executeCommand('cursorMove', {
+                            to: 'nextBlankLine',
+                        });
+                        return unneededArgs.none;
+                    } else {
+                        return unneededArgs.num;
+                    }
+                case "TAB|RIGHT":
+                    if (num < 9) {
+                        await vscode.commands.executeCommand('workbench.action.nextEditor');
+                        return unneededArgs.none;
+                    } else {
+                        return unneededArgs.num;
+                    }
+                case "TAB|LEFT":
+                    if (num < 9) {
+                        await vscode.commands.executeCommand('workbench.action.previousEditor');
+                        return unneededArgs.none;
+                    } else {
+                        return unneededArgs.num;
+                    }
+                case "LINE|RIGHT":
+                case "LINE|LEFT":
+                    return unneededArgs.dir;
+                default:
+                    return unneededArgs.invalid_arg;
 
+            }
+
+        } else {
+            console.error('No active editor');
+            return unneededArgs.noEditor;
         }
-
-    } else {
-        console.error('No active editor');
-        return unneededArgs.noEditor;
+    } catch (error) {
+        console.error(`Error moving by number by object in direction: ${error}`);
+        return unneededArgs.error;
     }
 }
 
-async function executeAction1(kT0: keywordType, arg: any): Promise<dictationMode> {
+async function executeAction1(kT0: keywordType, arg: any): Promise<moveSuccess> {
     try {
         let actionResult: moveSuccess;
-
         switch (kT0) {
             case keywordType.number:
                 actionResult = moveToLine(arg);
@@ -368,26 +405,14 @@ async function executeAction1(kT0: keywordType, arg: any): Promise<dictationMode
                 break;
             default:
                 console.error(`Invalid keyword type: ${kT0}`);
-                return dictationMode.execution_failed;
+                return moveSuccess.invalid_arg;
         }
 
-        // Handle the result based on moveSuccess enum
-        switch (actionResult) {
-            case moveSuccess.success:
-                return dictationMode.other;
-            case moveSuccess.invalid_arg:
-                console.error(`Invalid argument: ${arg}`);
-                return dictationMode.execution_failed;
-            case moveSuccess.no_editor:
-                console.error('No active editor');
-                return dictationMode.execution_failed;
-            default:
-                console.error(`Unexpected result: ${actionResult}`);
-                return dictationMode.execution_failed;
-        }
+        return actionResult;
+
     } catch (error) {
         console.error(`Error executing action: ${error}`);
-        return dictationMode.execution_failed;
+        return moveSuccess.error;
     }
 }
 
@@ -419,13 +444,13 @@ async function executeAction2(kT0: keywordType, kT1: keywordType, args: any[]): 
 
 type ActionFunctionUnneededArgs = (...args: any[]) => Promise<unneededArgs>;
 
-
 enum moveSuccess3 {
     used1,
     used2,
     used_all,
     no_editor,
-    invalid_arg
+    invalid_arg,
+    error
 }
 async function executeAction3(kT0: keywordType, kT1: keywordType, kT2: keywordType, args: any[]): Promise<moveSuccess3> {
     const actionMap3Different: { [key: string]: ActionFunctionUnneededArgs } = {
@@ -444,7 +469,7 @@ async function executeAction3(kT0: keywordType, kT1: keywordType, kT2: keywordTy
         [`${keywordType.vsObj}_${keywordType.number}_${keywordType.number}`]: moveNumObj,
         [`${keywordType.vsObj}_${keywordType.dir}_${keywordType.dir}`]: moveObjDir,
     };
-    const actionFirst2OrAllSame: { [key: string]: ActionFunctionMoveSucc } = {
+    const actionFirst2Same: { [key: string]: ActionFunctionMoveSucc } = {
         [`${keywordType.number}_${keywordType.number}_${keywordType.dir}`]: moveToLine,
         [`${keywordType.number}_${keywordType.number}_${keywordType.vsObj}`]: moveToLine,
         [`${keywordType.dir}_${keywordType.dir}_${keywordType.number}`]: moveDir,
@@ -452,45 +477,169 @@ async function executeAction3(kT0: keywordType, kT1: keywordType, kT2: keywordTy
         [`${keywordType.vsObj}_${keywordType.vsObj}_${keywordType.number}`]: moveObj,
         [`${keywordType.vsObj}_${keywordType.vsObj}_${keywordType.dir}`]: moveObj,
 
-        [`${keywordType.number}_${keywordType.number}_${keywordType.number}`]: moveToLine,
-        [`${keywordType.dir}_${keywordType.dir}_${keywordType.dir}`]: moveDir,
-        [`${keywordType.vsObj}_${keywordType.vsObj}_${keywordType.vsObj}`]: moveObj,
     };
-    
+
+
     const actionKey = `${kT0}_${kT1}_${kT2}`;
     const action = actionMap3Different[actionKey];
     if (action) {
+        //arguments are all different
         const result: unneededArgs = await action(...args);
         switch (result) {
-            //TODO
+            case unneededArgs.error:
+                return moveSuccess3.error;
+            case unneededArgs.invalid_arg:
+                return moveSuccess3.invalid_arg;
+            case unneededArgs.noEditor:
+                return moveSuccess3.no_editor;
+            case unneededArgs.none:
+                return moveSuccess3.used_all;
+            default:
+                //unneded arg is the first one
+                if (result === unneededArgs.num && kT0 === keywordType.number || result === unneededArgs.obj && kT0 === keywordType.vsObj || result === unneededArgs.dir && kT0 === keywordType.dir) {
+                    const m: moveSuccess = await executeAction1(kT0, args[0]);
+                    switch (m) {
+                        case moveSuccess.success:
+                            return moveSuccess3.used1;
+                        case moveSuccess.invalid_arg:
+                            console.error(`Invalid arguments for GO: ${args}`);
+                            return moveSuccess3.invalid_arg;
+                        case moveSuccess.no_editor:
+                            console.error('No active editor');
+                            return moveSuccess3.no_editor;
+                        case moveSuccess.error:
+                            return moveSuccess3.error;
+                    }
+                }
+                //unneeded arg is the last one
+                else if (result === unneededArgs.num && kT2 === keywordType.number || result === unneededArgs.obj && kT2 === keywordType.vsObj || result === unneededArgs.dir && kT2 === keywordType.dir) {
+                    const m: moveSuccess = await executeAction2(kT0, kT1, args);
+                    switch (m) {
+                        case moveSuccess.success:
+                            return (kT0 !== kT1) ? moveSuccess3.used2 : moveSuccess3.used1;
+                        case moveSuccess.invalid_arg:
+                            const m1: moveSuccess = await executeAction1(kT0, args[0]);
+                            switch (m1) {
+                                case moveSuccess.success:
+                                    return moveSuccess3.used1;
+                                case moveSuccess.invalid_arg:
+                                    console.error(`Invalid arguments for GO: ${args}`);
+                                    return moveSuccess3.invalid_arg;
+                                case moveSuccess.no_editor:
+                                    console.error('No active editor');
+                                    return moveSuccess3.no_editor;
+                                case moveSuccess.error:
+                                    return moveSuccess3.error;
+                            }
+                        case moveSuccess.no_editor:
+                            console.error('No active editor');
+                            return moveSuccess3.no_editor;
+                        case moveSuccess.error:
+                            return moveSuccess3.error;
+                    }
+                }
+                //unneded arg is the second one
+                else if (result === unneededArgs.num && kT1 === keywordType.number || result === unneededArgs.obj && kT1 === keywordType.vsObj || result === unneededArgs.dir && kT1 === keywordType.dir) {
+                    const m: moveSuccess = await executeAction1(kT0, args[0]);
+                    switch (m) {
+                        case moveSuccess.success:
+                            return moveSuccess3.used1;
+                        case moveSuccess.invalid_arg:
+                            console.error(`Invalid arguments for GO: ${args}`);
+                            return moveSuccess3.invalid_arg;
+                        case moveSuccess.no_editor:
+                            console.error('No active editor');
+                            return moveSuccess3.no_editor;
+                        case moveSuccess.error:
+                            return moveSuccess3.error;
+                    }
+                } else {
+                    console.error(`This state should not be reached. Arguments: ${args}`);
+                    return moveSuccess3.error;
+                }
         }
     } else {
         const action2 = actionLast2Same[`${kT1}_${kT2}_${kT0}`];
         if (action2) {
+            //because the last two args are same we presume the last one is from next set of keywords
             const result: moveSuccess = await action2(...args);
             switch (result) {
                 case moveSuccess.success:
                     return moveSuccess3.used2;
                 case moveSuccess.invalid_arg:
-                    console.error(`Invalid arguments for GO: ${args}`);
-                    //TODO run only first key
-                    return moveSuccess3.used1;
+                    const m: moveSuccess = await executeAction1(kT0, args[0]);
+                    switch (m) {
+                        case moveSuccess.success:
+                            return moveSuccess3.used1;
+                        case moveSuccess.invalid_arg:
+                            console.error(`Invalid arguments for GO: ${args}`);
+                            return moveSuccess3.invalid_arg;
+                        case moveSuccess.no_editor:
+                            console.error('No active editor');
+                            return moveSuccess3.no_editor;
+                        case moveSuccess.error:
+                            return moveSuccess3.error;
+                    }
                 case moveSuccess.no_editor:
                     console.error('No active editor');
                     return moveSuccess3.no_editor;
+                case moveSuccess.error:
+                    return moveSuccess3.error;
             }
         } else {
-            const action3 = actionFirst2OrAllSame[`${kT0}_${kT1}_${kT2}`];
+            const action3 = actionFirst2Same[`${kT0}_${kT1}_${kT2}`];
             if (action3) {
+                //because the first two args are same we take the first keyword as separate action
                 const result: moveSuccess = await action3(...args);
-                return result;
+                switch (result) {
+                    case moveSuccess.success:
+                        return moveSuccess3.used1;
+                    case moveSuccess.invalid_arg:
+                        console.error(`Invalid arguments for GO: ${args}`);
+                        return moveSuccess3.invalid_arg;
+                    case moveSuccess.no_editor:
+                        console.error('No active editor');
+                        return moveSuccess3.no_editor;
+                    case moveSuccess.error:
+                        return moveSuccess3.error;
+                }
             } else {
-                console.error(`No action defined for ${actionKey}.`);
-                return moveSuccess3.invalid_arg;
+                if (!(kT0 === kT1 && kT1 === kT2)) {
+                    console.error(`No action defined for ${actionKey}.`);
+                    return moveSuccess3.invalid_arg;
+                } else {
+                    //all three are the same
+                    //we can execute first and second keyword as separate actions
+                    const m: moveSuccess = await executeAction1(kT0, args[0]);
+                    switch (m) {
+                        case moveSuccess.success:
+                            const m1: moveSuccess = await executeAction1(kT1, args[1]);
+                            switch (m1) {
+                                case moveSuccess.success:
+                                    return moveSuccess3.used2;
+                                case moveSuccess.invalid_arg:
+                                    console.error(`Invalid arguments for GO: ${args}`);
+                                    return moveSuccess3.invalid_arg;
+                                case moveSuccess.no_editor:
+                                    console.error('No active editor');
+                                    return moveSuccess3.no_editor;
+                                case moveSuccess.error:
+                                    return moveSuccess3.error;
+                            }
+                        case moveSuccess.invalid_arg:
+                            console.error(`Invalid arguments for GO: ${args}`);
+                            return moveSuccess3.invalid_arg;
+                        case moveSuccess.no_editor:
+                            console.error('No active editor');
+                            return moveSuccess3.no_editor;
+                        case moveSuccess.error:
+                            return moveSuccess3.error;
+                    }
+                }
+
             }
         }
     }
-
 
 }
 
@@ -520,7 +669,20 @@ export default async function GO(args: any[]): Promise<dictationMode> {
 
         if (args.length === 1) {
             const mode = await executeAction1(kT0, arg);
-            return mode;
+            switch (mode) {
+                case moveSuccess.success:
+                    // Adjust args according to the action taken
+                    args = args.slice(1);
+                    break;
+                case moveSuccess.invalid_arg:
+                    console.error(`Invalid arguments for GO: ${args}`);
+                    return dictationMode.execution_failed;
+                case moveSuccess.no_editor:
+                    console.error('No active editor');
+                    return dictationMode.execution_failed;
+                case moveSuccess.error:
+                    return dictationMode.execution_failed;
+            }
         }
 
         else if (args.length === 2) {
@@ -530,13 +692,15 @@ export default async function GO(args: any[]): Promise<dictationMode> {
             switch (result) {
                 case moveSuccess.success:
                     // Adjust args according to the action taken
-                    args = args.slice((kT0 !== kT1 ) ? 2 : 1);
+                    args = args.slice((kT0 !== kT1) ? 2 : 1);
                     break;
                 case moveSuccess.invalid_arg:
                     console.error(`Invalid arguments for GO: ${args}`);
                     return dictationMode.execution_failed;
                 case moveSuccess.no_editor:
                     console.error('No active editor');
+                    return dictationMode.execution_failed;
+                case moveSuccess.error:
                     return dictationMode.execution_failed;
             }
         }
@@ -550,6 +714,27 @@ export default async function GO(args: any[]): Promise<dictationMode> {
                 //TODO check if kT2 is num then it could be next keyword combination's num
                 //npr. 2 LEFT 3 DOWN => 2 LEFT ; 3 DOWN
                 // (we prioritise numbers that are before dir or obj)
+            }else{
+                const result: moveSuccess3 = await executeAction3(kT0, kT1, kT2, args);
+                switch (result) {
+                    case moveSuccess3.used1:
+                        args = args.slice(1);
+                        break;
+                    case moveSuccess3.used2:
+                        args = args.slice(2);
+                        break;
+                    case moveSuccess3.used_all:
+                        args = args.slice(3);
+                        break;
+                    case moveSuccess3.no_editor:
+                        console.error('No active editor');
+                        return dictationMode.execution_failed;
+                    case moveSuccess3.invalid_arg:
+                        console.error(`Invalid arguments for GO: ${args}`);
+                        return dictationMode.execution_failed;
+                    case moveSuccess3.error:
+                        return dictationMode.execution_failed;
+                }
             }
 
         }
