@@ -74,6 +74,10 @@ export default class Extension {
                 vscode.window.showInformationMessage('Noben ukaz ni bil najden');
             } else if (command === dictationMode.execution_failed) {
                 vscode.window.showErrorMessage('Izvedba ukaza ni bila uspešna');
+            } else if (command === dictationMode.no_active_editor) {
+                vscode.window.showErrorMessage('Ni aktivnega urejevalnika');
+            } else if (command === dictationMode.invalid_arguments) {
+                vscode.window.showErrorMessage('Neveljavni argumenti');
             }
 
             if (command === dictationMode.stop) {

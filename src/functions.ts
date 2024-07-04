@@ -10,6 +10,8 @@ export const enum dictationMode {
     no_command_found,
     function_not_found,
     execution_failed,
+    invalid_arguments,
+    no_active_editor,
     stop_dictating
 }
 

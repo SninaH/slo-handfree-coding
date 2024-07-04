@@ -33,10 +33,7 @@ async function getNameAndArgs(transcription: string): Promise<[string, any[]]> {
     const pyObjects = await vscode.workspace.getConfiguration('slo-handsfree-coding').get('pythonObjectsName') as { [key: string]: string };
     const vsObjects = await vscode.workspace.getConfiguration('slo-handsfree-coding').get('vscodeObjectsName') as { [key: string]: string };
     const keywords = await vscode.workspace.getConfiguration('slo-handsfree-coding').get('directionsName') as { [key: string]: string };
-    console.log(`commands: ${commands}`);
-    console.log(`objects: ${pyObjects}`);
-    console.log(`objects: ${vsObjects}`);
-    console.log(`keywords: ${keywords}`);
+
     for (let key in commands) {
         let idx_substring = transcription.indexOf(key);
         if (idx_substring !== -1) {
@@ -51,9 +48,9 @@ async function getNameAndArgs(transcription: string): Promise<[string, any[]]> {
                 argsString = changeKeyWithObjectValue(argsString, vsObjects); //replace objects keys with their values/codes
                 argsString = changeKeyWithObjectValue(argsString, keywords); //replace keywords keys with their values/codes
                 argsString = changeNumbers(argsString); //replace words for numbers with numbers
-                args = argsString.split(/\s+(?=[A-Z0-9])/) //split by space before capital letter or number because values/codes are in uppercase and we want also numbers as parameters
-                .filter(arg => /^[A-Z0-9]+$/.test(arg)) // Keep only elements in capital letters or numbers
-                .map(arg => isNaN(Number(arg)) ? arg : Number(arg)); // Convert number strings to numbers
+                args = argsString.split(/\s+(?=[A-Z0-9])/); //split by space before capital letter or number because values/codes are in uppercase and we want also numbers as parameters
+                args = args.filter(arg => /^[A-Z0-9_]+$/.test(arg)); // Keep only elements that consist of capital letters or numbers or _
+                args = args.map(arg => isNaN(Number(arg)) ? arg : Number(arg)); // Convert number strings to numbers
 
             } else {
                 argsString = changeKeyWithObjectValue(argsString, pyObjects); //replace objects keys with their values/codes
