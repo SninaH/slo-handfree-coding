@@ -269,6 +269,6 @@ export const functions = {
     ///////////////////////////////////////////////////////
     // from here on are functions with arguments
     ///////////////////////////////////////////////////////
-    GO:GO
+    GO:GO //imported at the top of document
 
 };
