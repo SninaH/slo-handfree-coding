@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { dictationMode } from '../functions';
-import { keywordType, findKeywordType } from './common_stuff';
+import { tokenType, findKeywordType } from './common_stuff';
 
 //TODO wrappedLineFirstNonWhitespaceCharacter je zdaj za GO START
 
@@ -397,23 +397,23 @@ async function moveNumObjDir(num: number, obj: string, dir: string): Promise<unn
 */
 function validateNumArgs(arg1: string, arg2?: string): boolean {
     const kT1 = findKeywordType(arg1);
-    if (kT1 === keywordType.number) {
+    if (kT1 === tokenType.number) {
         return false;
     }
-    else if (kT1 === keywordType.vsObj) {
+    else if (kT1 === tokenType.vsObj) {
         const validCombinations = [
             "LINE|UP", "LINE|DOWN", "PAGE|UP", "PAGE|DOWN",
             "BLANK_LINE|UP", "BLANK_LINE|DOWN", "TAB|RIGHT", "TAB|LEFT",
             "LINE|RIGHT", "LINE|LEFT"
         ];
-        if (arg2 && findKeywordType(arg2) === keywordType.dir && validCombinations.includes(`${arg1}|${arg2}`)) {
+        if (arg2 && findKeywordType(arg2) === tokenType.dir && validCombinations.includes(`${arg1}|${arg2}`)) {
             return true;
         }
         return false;
     }
     else {
         //only check left is num arg1
-        if (kT1 === keywordType.dir) {
+        if (kT1 === tokenType.dir) {
             const validNumDir = ["UP", "DOWN", "LEFT", "RIGHT"];
             return validNumDir.includes(arg1);
         }
@@ -422,17 +422,17 @@ function validateNumArgs(arg1: string, arg2?: string): boolean {
     }
 }
 
-async function executeAction1(kT0: keywordType, arg: any): Promise<moveSuccess> {
+async function executeAction1(kT0: tokenType, arg: any): Promise<moveSuccess> {
     try {
         let actionResult: moveSuccess;
         switch (kT0) {
-            case keywordType.number:
+            case tokenType.number:
                 actionResult = moveToLine(arg);
                 break;
-            case keywordType.dir:
+            case tokenType.dir:
                 actionResult = await moveDir(arg);
                 break;
-            case keywordType.vsObj:
+            case tokenType.vsObj:
                 actionResult = await moveObj(arg);
                 break;
             default:
@@ -450,19 +450,19 @@ async function executeAction1(kT0: keywordType, arg: any): Promise<moveSuccess> 
 
 type ActionFunctionMoveSucc = (...args: any[]) => Promise<moveSuccess> | moveSuccess;
 
-async function executeAction2(kT0: keywordType, kT1: keywordType, [args0, args1]: [any, any]): Promise<moveSuccess> {
+async function executeAction2(kT0: tokenType, kT1: tokenType, [args0, args1]: [any, any]): Promise<moveSuccess> {
     const actionMap: { [key: string]: ActionFunctionMoveSucc } = {
-        [`${keywordType.number}_${keywordType.number}`]: moveToLine,
-        [`${keywordType.dir}_${keywordType.dir}`]: moveDir,
-        [`${keywordType.vsObj}_${keywordType.vsObj}`]: moveObj,
-        [`${keywordType.number}_${keywordType.dir}`]: moveNumDir,
-        [`${keywordType.number}_${keywordType.vsObj}`]: moveNumObj,
-        [`${keywordType.vsObj}_${keywordType.dir}`]: moveObjDir,
+        [`${tokenType.number}_${tokenType.number}`]: moveToLine,
+        [`${tokenType.dir}_${tokenType.dir}`]: moveDir,
+        [`${tokenType.vsObj}_${tokenType.vsObj}`]: moveObj,
+        [`${tokenType.number}_${tokenType.dir}`]: moveNumDir,
+        [`${tokenType.number}_${tokenType.vsObj}`]: moveNumObj,
+        [`${tokenType.vsObj}_${tokenType.dir}`]: moveObjDir,
     };
     const actionMap2: { [key: string]: ActionFunctionMoveSucc } = {
-        [`${keywordType.dir}_${keywordType.number}`]: moveNumDir,
-        [`${keywordType.dir}_${keywordType.vsObj}`]: moveObjDir,
-        [`${keywordType.vsObj}_${keywordType.number}`]: moveNumObj,
+        [`${tokenType.dir}_${tokenType.number}`]: moveNumDir,
+        [`${tokenType.dir}_${tokenType.vsObj}`]: moveObjDir,
+        [`${tokenType.vsObj}_${tokenType.number}`]: moveNumObj,
     };
     const actionKey = `${kT0}_${kT1}`;
     console.log(actionKey);
@@ -492,15 +492,15 @@ enum moveSuccess3 {
     invalid_arg,
     error
 }
-async function executeAction3(kT0: keywordType, kT1: keywordType, kT2: keywordType, args: any[]): Promise<moveSuccess3> {
+async function executeAction3(kT0: tokenType, kT1: tokenType, kT2: tokenType, args: any[]): Promise<moveSuccess3> {
     console.log('executeAction3');
     console.log(args);
     if (kT0 !== kT1 && kT1 !== kT2 && kT0 !== kT2) {
         //arguments are all different
         console.log('arguments are all different type');
-        const num = (kT0 === keywordType.number) ? args[0] : (kT1 === keywordType.number) ? args[1] : args[2];
-        const obj = (kT0 === keywordType.vsObj) ? args[0] : (kT1 === keywordType.vsObj) ? args[1] : args[2];
-        const dir = (kT0 === keywordType.dir) ? args[0] : (kT1 === keywordType.dir) ? args[1] : args[2];
+        const num = (kT0 === tokenType.number) ? args[0] : (kT1 === tokenType.number) ? args[1] : args[2];
+        const obj = (kT0 === tokenType.vsObj) ? args[0] : (kT1 === tokenType.vsObj) ? args[1] : args[2];
+        const dir = (kT0 === tokenType.dir) ? args[0] : (kT1 === tokenType.dir) ? args[1] : args[2];
         const result: unneededArgs = await moveNumObjDir(num, obj, dir);
         switch (result) {
             case unneededArgs.error:
@@ -513,7 +513,7 @@ async function executeAction3(kT0: keywordType, kT1: keywordType, kT2: keywordTy
                 return moveSuccess3.used_all;
             default:
                 //unneded arg is the first one
-                if (result === unneededArgs.num && kT0 === keywordType.number || result === unneededArgs.obj && kT0 === keywordType.vsObj || result === unneededArgs.dir && kT0 === keywordType.dir) {
+                if (result === unneededArgs.num && kT0 === tokenType.number || result === unneededArgs.obj && kT0 === tokenType.vsObj || result === unneededArgs.dir && kT0 === tokenType.dir) {
                     const m: moveSuccess = await executeAction1(kT0, args[0]);
                     switch (m) {
                         case moveSuccess.success:
@@ -529,7 +529,7 @@ async function executeAction3(kT0: keywordType, kT1: keywordType, kT2: keywordTy
                     }
                 }
                 //unneeded arg is the last one
-                else if (result === unneededArgs.num && kT2 === keywordType.number || result === unneededArgs.obj && kT2 === keywordType.vsObj || result === unneededArgs.dir && kT2 === keywordType.dir) {
+                else if (result === unneededArgs.num && kT2 === tokenType.number || result === unneededArgs.obj && kT2 === tokenType.vsObj || result === unneededArgs.dir && kT2 === tokenType.dir) {
                     const m: moveSuccess = await executeAction2(kT0, kT1, [args[0], args[1]]);
                     switch (m) {
                         case moveSuccess.success:
@@ -556,7 +556,7 @@ async function executeAction3(kT0: keywordType, kT1: keywordType, kT2: keywordTy
                     }
                 }
                 //unneded arg is the second one
-                else if (result === unneededArgs.num && kT1 === keywordType.number || result === unneededArgs.obj && kT1 === keywordType.vsObj || result === unneededArgs.dir && kT1 === keywordType.dir) {
+                else if (result === unneededArgs.num && kT1 === tokenType.number || result === unneededArgs.obj && kT1 === tokenType.vsObj || result === unneededArgs.dir && kT1 === tokenType.dir) {
                     const m: moveSuccess = await executeAction1(kT0, args[0]);
                     switch (m) {
                         case moveSuccess.success:
@@ -647,7 +647,7 @@ async function executeAction3(kT0: keywordType, kT1: keywordType, kT2: keywordTy
         }
     } else if (kT0 === kT2 && kT1 !== kT2) {
         console.log('first and last argument of the same type');
-        if (kT0 === keywordType.dir && kT1 === keywordType.number || kT0 === keywordType.number && kT1 === keywordType.vsObj || kT0 === keywordType.vsObj && kT1 === keywordType.number || kT0 === keywordType.vsObj && kT1 === keywordType.dir) {
+        if (kT0 === tokenType.dir && kT1 === tokenType.number || kT0 === tokenType.number && kT1 === tokenType.vsObj || kT0 === tokenType.vsObj && kT1 === tokenType.number || kT0 === tokenType.vsObj && kT1 === tokenType.dir) {
             console.log('execute only first argument as separate action');
             // dir num dir
             // prioritise num before dir: (dir) (num dir)
@@ -666,7 +666,7 @@ async function executeAction3(kT0: keywordType, kT1: keywordType, kT2: keywordTy
                 case moveSuccess.error:
                     return moveSuccess3.error;
             }
-        } else if (kT0 === keywordType.number && kT1 === keywordType.dir || kT0 === keywordType.dir && kT1 === keywordType.vsObj) {
+        } else if (kT0 === tokenType.number && kT1 === tokenType.dir || kT0 === tokenType.dir && kT1 === tokenType.vsObj) {
             console.log('try executing first two arguments as separate action');
             // num dir num
             // dir obj dir / prednost ima smer pred objektom kot objekt pred smerjo
@@ -782,7 +782,7 @@ export default async function GO(args: any[]): Promise<dictationMode> {
                 //npr. 2 LEFT 3 DOWN => 2 LEFT ; 3 DOWN
                 // (we prioritise numbers that are before dir or obj)
 
-                if (kT2 === keywordType.number) {
+                if (kT2 === tokenType.number) {
                     if (args.length > 4 && validateNumArgs(args[3], args[4]) || validateNumArgs(args[3])) {
                         //args[3] is next keyword combination's num
                         console.log(`${args[3]} is next keyword combination's num`);

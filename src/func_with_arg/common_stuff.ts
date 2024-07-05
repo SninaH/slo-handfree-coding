@@ -1,25 +1,25 @@
-export enum keywordType {
-    dir,
-    pyObj,
-    vsObj,
-    none,
-    number
+export enum tokenType {
+    dir = "dir",
+    pyObj = "pyObj",
+    vsObj = "vsObj",
+    none = "none",
+    number = "number"
 }
 
-export function findKeywordType(arg: any) {
+export function findKeywordType(arg: any): tokenType {
 
     if (typeof arg === 'number') {
-        return keywordType.number;
+        return tokenType.number;
     } else if (typeof arg === 'string') {
         if (directions.includes(arg)) {
-            return keywordType.dir;
+            return tokenType.dir;
         } else if (vscodeObjects.includes(arg)) {
-            return keywordType.vsObj;
+            return tokenType.vsObj;
         } else if (pythonOjects.includes(arg)) {
-            return keywordType.pyObj;
+            return tokenType.pyObj;
         }
     }
-    return keywordType.none;
+    return tokenType.none;
 
 }
 
