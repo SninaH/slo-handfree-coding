@@ -12,6 +12,7 @@ export default class Extension {
     private pythonRazpoznavalnikURL: string;
     private narekovanje: boolean = false;
     private posebniZnaki: boolean = true;
+    private crkuj: boolean = false;
     private context: vscode.ExtensionContext;
     private pressedStopButton: boolean = false;
     startListeningOnClick: vscode.Disposable;
@@ -58,7 +59,7 @@ export default class Extension {
             transcription = transcription.replace(/⁇/g, '');
             vscode.window.showInformationMessage(transcription);
             //procesiraj ukaz
-            let command: dictationMode = await CommandHandler(transcription, this.narekovanje, this.posebniZnaki);
+            let command: dictationMode = await CommandHandler(transcription, this.narekovanje, this.posebniZnaki, this.crkuj);
             console.log(command);
 
             if (command === dictationMode.dictate) {
@@ -70,6 +71,9 @@ export default class Extension {
             } else if (command === dictationMode.stop_dictating) {
                 this.narekovanje = false;
                 this.posebniZnaki = true;
+                this.crkuj = false;
+            } else if (command === dictationMode.spell) {
+                this.crkuj = true;
             } else if (command === dictationMode.no_command_found) {
                 vscode.window.showInformationMessage('Noben ukaz ni bil najden');
             } else if (command === dictationMode.execution_failed) {
@@ -83,6 +87,7 @@ export default class Extension {
             if (command === dictationMode.stop) {
                 this.narekovanje = false;
                 this.posebniZnaki = true;
+                this.crkuj = false;
             }
             //če ukaz ni 'stop', nadaljujemo z poslušanjem
             else if (!this.pressedStopButton) {
@@ -120,7 +125,15 @@ export default class Extension {
 
     async startListening(): Promise<string> {
         console.log('Listening started');
-        this.myStatusBarItem.text = `$(mic-filled) poslušam`;
+        if (this.crkuj) {
+            this.myStatusBarItem.text = `$(mic-filled) črkovanje`;
+        } else if (this.narekovanje && this.posebniZnaki) {
+            this.myStatusBarItem.text = `$(mic-filled) narekovanje`;
+        } else if (this.narekovanje && !this.posebniZnaki) {
+            this.myStatusBarItem.text = `$(mic-filled) narekovanje brez posebnih znakov`;
+        } else {
+            this.myStatusBarItem.text = `$(mic-filled) poslušam`;
+        }
         this.myStatusBarItem.show();
 
         try {

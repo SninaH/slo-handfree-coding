@@ -7,6 +7,7 @@ import SELECT from './func_with_arg/select';
 export const enum dictationMode {
     dictate,
     dictate_without_special_characters,
+    spell,
     stop,
     other,
     no_command_found,
@@ -61,6 +62,11 @@ export const changeNumbers = (text: string): string => {
 
 //TODO check in every function that needs editor if the editor is active
 export const functions = {
+    /**
+     * function that inserts plain text into the editor
+     * @param args - array of single element - text that we want to insert
+     * @returns dictate_without_special_characters if the function was successful, no_active_editor if there is no active editor, invalid_arguments if the arguments are invalid
+     */
     insert_plain_text: async (args: any[]): Promise<dictationMode> => {
         if (args.length !== 1 || typeof args[0] !== 'string') {
             console.error('Invalid arguments for insert_plain_text. Expected 1 argument of type string.');
@@ -100,7 +106,22 @@ export const functions = {
         }
 
     },
-
+    /**
+     * function that turns every word in text into its first letter and removes spaces
+     * @example spelling("Hello world") // Hw
+     * @example spelling("testo indija most energija") // time
+     */
+    spelling: async (args: any[]): Promise<dictationMode> => {
+        if (args.length !== 1 || typeof args[0] !== 'string') {
+            console.error('Invalid arguments for spelling. Expected 1 argument of type string.');
+            return dictationMode.invalid_arguments;
+        }
+        const text: string = args[0];
+        const matches = text.match(/\b\w/g);
+        const formattedText = matches ? matches.join('') : '';
+        const success = await functions.insert_plain_text([formattedText]);
+        return (success === dictationMode.dictate_without_special_characters) ? dictationMode.spell : success;
+    },
     DICTATE_WITHOUT_SPECIAL_CHARACTERS: (args: any[]): dictationMode => {
         if (args.length !== 0) {
             console.error('Invalid arguments for DICTATE_WITHOUT_SPECIAL_CHARACTERS. Expected 0 arguments');
@@ -115,6 +136,14 @@ export const functions = {
             return dictationMode.invalid_arguments;
         } else {
             return dictationMode.dictate;
+        }
+    },
+    SPELL: (args: any[]): dictationMode => {
+        if (args.length !== 0) {
+            console.error('Invalid arguments for SPELL. Expected 0 arguments');
+            return dictationMode.invalid_arguments;
+        } else {
+            return dictationMode.spell;
         }
     },
     EXECUTE_TEXT_IN_EDITOR: async (args: any[]): Promise<dictationMode> => {
@@ -325,12 +354,104 @@ export const functions = {
         }
     },
 
-    BREAKPOINT: async (args: any[]): Promise<dictationMode> => {
+    ///////////////////////////
+    // debug related functions
+    ///////////////////////////
+    DEBUGGER_BREAKPOINT: async (args: any[]): Promise<dictationMode> => {
         if (args.length !== 0) {
             console.error('Invalid arguments for BREAKPOINT. Expected 0 arguments');
             return dictationMode.invalid_arguments;
         } else {
             await vscode.commands.executeCommand('editor.debug.action.toggleBreakpoint');
+            return dictationMode.other;
+        }
+    },
+
+    DEBUGGER_CONTINUE: async (args: any[]): Promise<dictationMode> => {
+        if (args.length !== 0) {
+            console.error('Invalid arguments for BREAKPOINT. Expected 0 arguments');
+            return dictationMode.invalid_arguments;
+        } else {
+            await vscode.commands.executeCommand("workbench.action.debug.continue");
+            return dictationMode.other;
+        }
+    },
+    
+    DEBUGGER_INLINE_BREAKPOINT: async (args: any[]): Promise<dictationMode> => {
+        if (args.length !== 0) {
+            console.error('Invalid arguments for DEBUGGER_INLINE_BREAKPOINT. Expected 0 arguments');
+            return dictationMode.invalid_arguments;
+        } else {
+            await vscode.commands.executeCommand("editor.debug.action.toggleInlineBreakpoint");
+            return dictationMode.other;
+        }
+    },
+
+    DEBUGGER_PAUSE: async (args: any[]): Promise<dictationMode> => {
+        if (args.length !== 0) {
+            console.error('Invalid arguments for DEBUGGER_PAUSE. Expected 0 arguments');
+            return dictationMode.invalid_arguments;
+        } else {
+            await vscode.commands.executeCommand("workbench.action.debug.pause");
+            return dictationMode.other;
+        }
+    },
+
+    DEBUGGER_SHOW_HOVER: async (args: any[]): Promise<dictationMode> => {
+        if (args.length !== 0) {
+            console.error('Invalid arguments for DEBUGGER_SHOW_HOVER. Expected 0 arguments');
+            return dictationMode.invalid_arguments;
+        } else {
+            await vscode.commands.executeCommand("editor.debug.action.showDebugHover");
+            return dictationMode.other;
+        }
+    },
+
+    DEBUGGER_START: async (args: any[]): Promise<dictationMode> => {
+        if (args.length !== 0) {
+            console.error('Invalid arguments for DEBUGGER_START. Expected 0 arguments');
+            return dictationMode.invalid_arguments;
+        } else {
+            await vscode.commands.executeCommand("workbench.action.debug.start");
+            return dictationMode.other;
+        }
+    },
+    DEBUGGER_STEP_INTO: async (args: any[]): Promise<dictationMode> => {
+        if (args.length !== 0) {
+            console.error('Invalid arguments for DEBUGGER_STEP_INTO. Expected 0 arguments');
+            return dictationMode.invalid_arguments;
+        } else {
+            await vscode.commands.executeCommand("workbench.action.debug.stepInto");
+            return dictationMode.other;
+        }
+    },
+
+    DEBUGGER_STEP_OUT: async (args: any[]): Promise<dictationMode> => {
+        if (args.length !== 0) {
+            console.error('Invalid arguments for DEBUGGER_STEP_OUT. Expected 0 arguments');
+            return dictationMode.invalid_arguments;
+        } else {
+            await vscode.commands.executeCommand("workbench.action.debug.stepOut");
+            return dictationMode.other;
+        }
+    },
+
+    DEBUGGER_STEP_OVER: async (args: any[]): Promise<dictationMode> => {
+        if (args.length !== 0) {
+            console.error('Invalid arguments for DEBUGGER_STEP_OVER. Expected 0 arguments');
+            return dictationMode.invalid_arguments;
+        } else {
+            await vscode.commands.executeCommand("workbench.action.debug.stepOver");
+            return dictationMode.other;
+        }
+    },
+
+    DEBUGGER_STOP: async (args: any[]): Promise<dictationMode> => {
+        if (args.length !== 0) {
+            console.error('Invalid arguments for DEBUGGER_STOP. Expected 0 arguments');
+            return dictationMode.invalid_arguments;
+        } else {
+            await vscode.commands.executeCommand("workbench.action.debug.stop");
             return dictationMode.other;
         }
     },

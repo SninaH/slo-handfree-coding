@@ -114,12 +114,23 @@ function matchStringWithKeysOfValue(s: string, value: string, obj: { [key: strin
 }
 //process the transcription and execute the command
 //return name of command
-export default async function findCommandOffline(transcription: string, narekovanje: boolean, posebniZnaki: boolean): Promise<dictationMode> {
+export default async function findCommandOffline(transcription: string, narekovanje: boolean, posebniZnaki: boolean, crkuj: boolean): Promise<dictationMode> {
     let dicMode = dictationMode.other;
     if (transcription === "") {
         return dictationMode.no_command_found;
     }
-
+    if(crkuj) {
+        const commands = vscode.workspace.getConfiguration('slo-handsfree-coding').get('commandsName') as { [key: string]: string };
+        if (matchStringWithKeysOfValue(transcription, "STOP_DICTATING", commands)) {
+            console.log("stop spelling");
+            return dictationMode.stop_dictating;
+        } else if (matchStringWithKeysOfValue(transcription, "STOP", commands)) {
+            console.log("stop");
+            return dictationMode.stop;
+        }
+        dicMode = dictationMode.spell;
+        await executeFunctionByName('spelling', [transcription]);
+    }
     if (narekovanje && posebniZnaki) {
         const commands = vscode.workspace.getConfiguration('slo-handsfree-coding').get('commandsName') as { [key: string]: string };
         if (matchStringWithKeysOfValue(transcription, "STOP_DICTATING", commands)) {
