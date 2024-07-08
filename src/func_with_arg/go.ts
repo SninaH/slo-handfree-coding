@@ -143,7 +143,13 @@ const NumObjDirToFunctions: { [key: string]: (num: number) => Promise<void> } = 
 };
 
 const NumObjToFunctions: { [key: string]: (num: number, editor: vscode.TextEditor) => void } = {
-    "LINE": moveToLine
+    "LINE": moveToLine,
+    "CHARACTER": (num: number, editor: vscode.TextEditor) => {
+        const position = editor.selection.active;
+        const newPosition = position.with(position.line, num);
+        editor.selection = new vscode.Selection(newPosition, newPosition);
+        editor.revealRange(new vscode.Range(newPosition, newPosition));
+    }
 };
 
 const NumDirToFunctions: { [key: string]: (num: number) => Promise<void> } = {
@@ -210,6 +216,18 @@ const ObjDirToFunctions: { [key: string]: () => Promise<void> } = {
     "LINE|END": async () => {
         await vscode.commands.executeCommand('cursorMove', {
             to: 'wrappedLineEnd',
+        });
+    },
+    "CHARACTER|LEFT": async () => {
+        await vscode.commands.executeCommand('cursorMove', {
+            to: 'left',
+            by: 'character',
+        });
+    },
+    "CHARACTER|RIGHT": async () => {
+        await vscode.commands.executeCommand('cursorMove', {
+            to: 'right',
+            by: 'character',
         });
     },
     "FILE|START": async () => {
@@ -479,6 +497,7 @@ function nextHasPrecedence(args: (string | number)[]): number {
     return -1;
 }
 
+////////////////////////////////////////////////////////////////////////////
 export default async function GO(args: any[]): Promise<dictationMode> {
     try {
         while (args.length > 0) {

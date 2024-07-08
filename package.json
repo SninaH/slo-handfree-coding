@@ -64,6 +64,9 @@
             "nehaj": "STOP",
             "nehaj poslušati": "STOP",
             "nehaj poslušat": "STOP",
+            "izvedi": "EXECUTE_TEXT_IN_EDITOR",
+            "izvedi označeno": "EXECUTE_SELECTED_TEXT_IN_EDITOR",
+            "dodaj ukaz": "ADD_SELECTED_TEXT_AS_TERMINAL_ACTION",
             "nastavitve": "SETTINGS",
             "shrani": "SAVE_FILE",
             "shrani kot": "SAVE_FILE_AS",
@@ -80,6 +83,7 @@
             "naprej": "REDO",
             "formatiraj": "FORMAT",
             "polepšaj": "FORMAT",
+            "zamakni": "SHIFT",
             "prekinitvena točka": "BREAKPOINT"
           },
           "additionalProperties": {
@@ -102,7 +106,9 @@
             "briši": "DELETE",
             "pojdi": "GO",
             "go": "GO",
-            "premakni": "MOVE"
+            "premakni": "MOVE",
+            "izvedi": "EXECUTE",
+            "terminal": "TERMINAL"
           },
           "additionalProperties": {
             "type": "string"
@@ -169,7 +175,8 @@
             "zavihke": "TAB",
             "definicija": "DEFINITION",
             "definicijo": "DEFINITION",
-            "definicije": "DEFINITION"
+            "definicije": "DEFINITION",
+            "znak": "CHARACTER"
           },
           "additionalProperties": {
             "type": "string"
@@ -199,6 +206,41 @@
           },
           "additionalProperties": {
             "type": "string"
+          }
+        },
+        "slo-handsfree-coding.selectionName":{
+          "type": "object",
+          "scope": "application",
+          "description": "Tu lahko spremenite imena ukazov za izbiro besedila. Spreminjajte le vrednosti na levi strani. Če želite odstraniti par, spremenite levo stran na znak, ki ni v abecedi npr. _",
+          "default":{
+            "vse": "ALL",
+            "več": "MORE",
+            "manj": "LESS",
+            "od": "FROM",
+            "do": "TO",
+            "do konca": "TO_END",
+            "do začetka": "TO_START"
+          },
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "slo-handsfree-coding.terminalActionsName":{
+          "type": "object",
+          "scope": "application",
+          "description": "Tu lahko spremenite imena ukazov, za upravljanje s terminalom (pred temi ukazi morate reči 'terminal' oz. ime, ki ste nastavili za ukaz TERMINAL pod commandsWithParametersName. Spreminjajte le vrednosti na desni strani.",
+          "default": {
+            "nov": "NEW",
+            "pokaži": "SHOW",
+            "odstrani": "KILL",
+            "skrij": "HIDE",
+            "počisti": "CLEAR",
+            "naslednji": "FOCUS_NEXT",
+            "prejšnji": "FOCUS_PREVIOUS",
+            "pojdi gor": "SCROLL_UP",
+            "pojdi dol": "SCROLL_DOWN",
+            "označi vse": "SELECT_ALL"
+
           }
         },
         "slo-handsfree-coding.specialCharactersName": {
@@ -273,6 +315,22 @@
             "sedem": "7",
             "osem": "8",
             "devet": "9"
+          },
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "slo-handsfree-coding.terminalOperationName":{
+          "type": "object",
+          "scope": "application",
+          "description": "Tu lahko spremenite imena operacij, ki jih želite izvesti z ukazom EXECUTE (default: 'izvedi'). Za dodati novo operacijo, napišite na desni strani ime, na levi pa kar želite izpisati v terminal. Znak za novo vrstico ni potreben.",
+          "default": {
+            "poženi": "run",
+            "poženi test": "run test",
+            "seznam datotek": "ls",
+            "pridobi": "git fetch",
+            "povleci": "git pull",
+            "pošlji": "git push"
           },
           "additionalProperties": {
             "type": "string"
