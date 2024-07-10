@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import GO from './func_with_arg/go';
 import TERMINAL from './func_with_arg/terminal';
 import SELECT from './func_with_arg/select';
+import DELETE from './func_with_arg/delete';
 
 
 export const enum dictationMode {
@@ -33,7 +34,7 @@ export const changeKeyWithObjectValue = (text: string, obj: { [key: string]: str
     }
     //change keys with values so that it prioritizes longer keys (for example 'enojni narekovaj' before 'narekovaj')
     const keysSortedByLengthDesc = Object.keys(obj).sort((a, b) => b.length - a.length);
-    const regex = new RegExp(keysSortedByLengthDesc.join('|'), 'g');
+    const regex = new RegExp(`\\b(${keysSortedByLengthDesc.join('|')})\\b`, 'g');
     return text.replace(regex, match => obj[match]); //replace method returns new string
 };
 
@@ -463,6 +464,8 @@ export const functions = {
     GO: GO, //imported at the top of document
     TERMINAL: TERMINAL, //imported at the top of document
     SELECT: SELECT, //imported at the top of document
+    DELETE: DELETE, //imported at the top of document
+
 
     EXECUTE: async (args: any[]): Promise<dictationMode> => {
         if (args.length !== 1 || typeof args[0] !== 'string') {

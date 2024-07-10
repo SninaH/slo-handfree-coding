@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { dictationMode } from '../functions';
 
 // Function to delete the current selection in the active editor
 async function deleteCurrentSelection() {
@@ -32,4 +33,15 @@ async function deleteSelectionOrCharacter() {
             });
         }
     }
+}
+
+export default async function DELETE(args: any[]): Promise<dictationMode> {
+    try{
+        deleteSelectionOrCharacter();
+        return dictationMode.other;
+    }catch(err){
+        console.log(err);
+        return dictationMode.execution_failed;
+    }
+    
 }

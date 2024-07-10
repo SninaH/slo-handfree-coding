@@ -133,15 +133,13 @@
             "razred": "CLASS",
             "konstanta": "CONSTANT",
             "slovar": "DICTIONARY",
-            "sicer": "ELSE",
-            "decimalno število": "FLOAT",
-            "funkcija": "FUNCTION",
             "če": "IF",
+            "sicer": "ELSE",
+            "funkcija": "FUNCTION",
             "import": "IMPORT",
             "importiraj": "IMPORT",
             "from": "FROM",
             "iz": "FROM",
-            "celo število": "INTEGER",
             "ključ": "KEY",
             "seznam": "LIST",
             "metoda": "METHOD",
@@ -149,16 +147,15 @@
             "printaj": "PRINT",
             "vnos": "INPUT",
             "vrni": "RETURN",
-            "niz": "STRING",
             "tip": "TYPE",
             "spremenljivka": "VARIABLE",
-            "vrednost": "VALUE",
             "dokler": "WHILE",
             "zanka": "FOR",
             "for": "FOR",
             "v": "IN",
-            "za vsak": "FOR_EACH"
-
+            "za vsak": "FOR_EACH",
+            "parameter": "PARAMETER",
+            "argument": "ARGUMENT"
           },
           "additionalProperties": {
             "type": "string"
@@ -219,11 +216,11 @@
             "type": "string"
           }
         },
-        "slo-handsfree-coding.selectionName":{
+        "slo-handsfree-coding.selectionName": {
           "type": "object",
           "scope": "application",
           "description": "Tu lahko spremenite imena ukazov za izbiro besedila. Spreminjajte le vrednosti na levi strani. Če želite odstraniti par, spremenite levo stran na znak, ki ni v abecedi npr. _",
-          "default":{
+          "default": {
             "vse": "ALL",
             "več": "MORE",
             "manj": "LESS",
@@ -236,7 +233,7 @@
             "type": "string"
           }
         },
-        "slo-handsfree-coding.terminalActionsName":{
+        "slo-handsfree-coding.terminalActionsName": {
           "type": "object",
           "scope": "application",
           "description": "Tu lahko spremenite imena ukazov, za upravljanje s terminalom (pred temi ukazi morate reči 'terminal' oz. ime, ki ste nastavili za ukaz TERMINAL pod commandsWithParametersName. Spreminjajte le vrednosti na desni strani.",
@@ -251,7 +248,6 @@
             "pojdi gor": "SCROLL_UP",
             "pojdi dol": "SCROLL_DOWN",
             "označi vse": "SELECT_ALL"
-
           }
         },
         "slo-handsfree-coding.specialCharactersName": {
@@ -331,7 +327,7 @@
             "type": "string"
           }
         },
-        "slo-handsfree-coding.terminalOperationName":{
+        "slo-handsfree-coding.terminalOperationName": {
           "type": "object",
           "scope": "application",
           "description": "Tu lahko spremenite imena operacij, ki jih želite izvesti z ukazom EXECUTE (default: 'izvedi'). Za dodati novo operacijo, napišite na desni strani ime, na levi pa kar želite izpisati v terminal. Znak za novo vrstico ni potreben.",

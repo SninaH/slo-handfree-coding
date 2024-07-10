@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { dictationMode } from '../functions';
-import { tokenType, findKeywordType } from './common_stuff';
-import { promises } from 'dns';
+import { tokenType, findTokenType } from './common_stuff';
+
 
 function moveToLine(lineNumber: number, editor: vscode.TextEditor): void {
     const position = new vscode.Position(lineNumber - 1, 0); // Lines are zero-indexed
@@ -492,7 +492,7 @@ async function executeThreeTokens(kT0: tokenType, kT1: tokenType, kT2: tokenType
  * 
  */
 function nextHasPrecedence(args: (string | number)[]): number {
-    const firstThree: [string | number, tokenType][] = [[args[0], findKeywordType(args[0])], [args[1], findKeywordType(args[1])], [args[2], findKeywordType(args[2])]];
+    const firstThree: [string | number, tokenType][] = [[args[0], findTokenType(args[0])], [args[1], findTokenType(args[1])], [args[2], findTokenType(args[2])]];
 
     return -1;
 }
@@ -503,7 +503,7 @@ export default async function GO(args: any[]): Promise<dictationMode> {
         while (args.length > 0) {
             console.log("start of while loop in GO");
             console.log(args);
-            const kT0: tokenType = findKeywordType(args[0]);
+            const kT0: tokenType = findTokenType(args[0]);
             if (kT0 === tokenType.none || kT0 === tokenType.pyObj) {
                 return dictationMode.invalid_arguments;
             }
@@ -516,7 +516,7 @@ export default async function GO(args: any[]): Promise<dictationMode> {
                     return result;
                 }
             }
-            const kT1: tokenType = findKeywordType(args[1]);
+            const kT1: tokenType = findTokenType(args[1]);
             if (args.length === 2) {
                 const result = await executeTwoTokens(kT0, kT1, args);
                 if (result instanceof Array) {
@@ -526,7 +526,7 @@ export default async function GO(args: any[]): Promise<dictationMode> {
                     return result;
                 }
             }
-            const kT2: tokenType = findKeywordType(args[2]);
+            const kT2: tokenType = findTokenType(args[2]);
             if (args.length === 3) {
                 const result = await executeThreeTokens(kT0, kT1, kT2, args);
                 if (result instanceof Array) {

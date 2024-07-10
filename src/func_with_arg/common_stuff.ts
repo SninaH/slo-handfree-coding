@@ -3,10 +3,11 @@ export enum tokenType {
     pyObj = "pyObj",
     vsObj = "vsObj",
     none = "none",
-    number = "number"
+    number = "number",
+    selection = "selection"
 }
 
-export function findKeywordType(arg: any): tokenType {
+export function findTokenType(arg: any): tokenType {
 
     if (typeof arg === 'number') {
         return tokenType.number;
@@ -17,6 +18,8 @@ export function findKeywordType(arg: any): tokenType {
             return tokenType.vsObj;
         } else if (pythonOjects.includes(arg)) {
             return tokenType.pyObj;
+        } else if (selection.includes(arg)) {
+            return tokenType.selection;
         }
     }
     return tokenType.none;
@@ -58,3 +61,5 @@ export const pythonOjects = [
  * Array of VSCode objects.
  */
 export const vscodeObjects = ["LINE", "FILE", "VIEW_PORT", "BLANK_LINE", "TAB", "DEFINITION", "PAGE"];
+
+export const selection = ["ALL", "MORE", "LESS", "FROM", "TO", "TO_START", "TO_END"];
