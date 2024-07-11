@@ -1,23 +1,350 @@
 {
   "name": "slo-handsfree-coding",
-  "displayName": "slo-handsfree-coding",
-  "description": "tool that lets you write code by dictating in Slovenian lanugage",
+  "displayName": "Slo Handsfree Coding",
+  "description": "tool that lets you write code by dictating in Slovenian language",
   "version": "0.0.1",
   "engines": {
-    "vscode": "^1.91.0"
+    "vscode": "^1.89.0"
   },
   "categories": [
     "Other"
   ],
-  "activationEvents": [],
+  "activationEvents": [
+    "onLanguage:python"
+  ],
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
       {
         "command": "slo-handsfree-coding.helloWorld",
         "title": "Hello World"
+      },
+      {
+        "command": "slo-handsfree-coding.startListeningWindow",
+        "title": "Start Listening Window"
+      },
+      {
+        "command": "slo-handsfree-coding.listen",
+        "title": "Listen"
       }
-    ]
+    ],
+    "keybindings": [
+      {
+        "command": "slo-handsfree-coding.listen",
+        "key": "alt+shift+space"
+      }
+    ],
+    "configuration": {
+      "title": "Slo Handsfree Coding",
+      "properties": {
+        "slo-handsfree-coding.transcriberLink": {
+          "type": "string",
+          "scope": "application",
+          "default": "http://localhost:8000",
+          "description": "Link to the transcriber server you have set up with docker from https://github.com/clarinsi/Slovene_ASR_e2e/ or https://github.com/clarinsi/Slovene_ASR_e2e/pull/5 (default: http://localhost:8000/)\nDO NOT PUT / AT THE END OF THE LINK"
+        },
+        "slo-handsfree-coding.transcriberTimeout": {
+          "type": "number",
+          "scope": "application",
+          "default": 120,
+          "description": "Timeout in seconds for the transcriber server: time needed to both record and transcribe (default: 180 = 3 minutes)"
+        },
+        "slo-handsfree-coding.commandsName": {
+          "type": "object",
+          "scope": "application",
+          "description": "Tu lahko spremenite imena ukazov za urejanje kode in upravljanje urejevalnika. Spreminjajte le vrednosti na levi strani. Če želite odstraniti par, spremenite levo stran na znak, ki ni v abecedi npr. _",
+          "default": {
+            "črkuj": "SPELL",
+            "narekuj": "DICTATE",
+            "narekuj brez posebnih znakov": "DICTATE_WITHOUT_SPECIAL_CHARACTERS",
+            "narekovanje brez posebnih znakov": "DICTATE_WITHOUT_SPECIAL_CHARACTERS",
+            "nehaj narekovanje": "STOP_DICTATING",
+            "nehaj narekovati": "STOP_DICTATING",
+            "stop narekovanje": "STOP_DICTATING",
+            "nehaj črkovati": "STOP_DICTATING",
+            "nehaj črkovanje": "STOP_DICTATING",
+            "stop": "STOP",
+            "nehaj": "STOP",
+            "nehaj poslušati": "STOP",
+            "nehaj poslušat": "STOP",
+            "izvedi": "EXECUTE_TEXT_IN_EDITOR",
+            "izvedi označeno": "EXECUTE_SELECTED_TEXT_IN_EDITOR",
+            "dodaj ukaz": "ADD_SELECTED_TEXT_AS_TERMINAL_ACTION",
+            "nastavitve": "SETTINGS",
+            "shrani": "SAVE_FILE",
+            "shrani kot": "SAVE_FILE_AS",
+            "zapri zavihek": "CLOSE_TAB",
+            "novo okno": "NEW_WINDOW",
+            "nova datoteka": "NEW_FILE",
+            "odpri": "OPEN",
+            "kopiraj": "COPY",
+            "prilepi": "PASTE",
+            "izreži": "CUT",
+            "razveljavi": "UNDO",
+            "nazaj": "UNDO",
+            "uveljavi": "REDO",
+            "naprej": "REDO",
+            "formatiraj": "FORMAT",
+            "polepšaj": "FORMAT",
+            "zamakni": "SHIFT",
+            "prekinitvena točka": "DEBUGGER_BREAKPOINT",
+            "prekinitvena točka na mestu": "DEBUGGER_INLINE_BREAKPOINT",
+            "začni razhroščevanje": "DEBUGGER_START",
+            "pavza razhroščevanje": "DEBUGGER_PAUSE",
+            "končaj razhroščevanje": "DEBUGGER_STOP",
+            "nadaljuj razhroščevanje": "DEBUGGER_CONTINUE",
+            "pokaži vrednost razhroščevanja": "DEBUGGER_SHOW_HOVER",
+            "korak ven": "DEBUGGER_STEP_OUT",
+            "korak noter": "DEBUGGER_STEP_INTO",
+            "korak": "DEBUGGER_STEP_OVER"
+          },
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "slo-handsfree-coding.commandsWithParametersName": {
+          "type": "object",
+          "scope": "application",
+          "description": "Tu lahko spremenite imena ukazov za urejanje kode in upravljanje urejevalnika. Spreminjajte vrednosti na levi strani. Če želite odstraniti par, spremenite levo stran na znak, ki ni v abecedi npr. _",
+          "default": {
+            "dodaj": "ADD",
+            "nova": "NEW",
+            "nov": "NEW",
+            "novo": "NEW",
+            "označi": "SELECT",
+            "označ": "SELECT",
+            "izbriši": "DELETE",
+            "brisanje": "DELETE",
+            "briši": "DELETE",
+            "pojdi": "GO",
+            "go": "GO",
+            "izvedi": "EXECUTE",
+            "terminal": "TERMINAL"
+          },
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "slo-handsfree-coding.pythonObjectsName": {
+          "type": "object",
+          "scope": "application",
+          "description": "Tu lahko spremenite imena python objektov, ki jih lahko narekujete. Spreminjajte le vrednosti na levi strani. Če želite odstraniti par, spremenite levo stran na znak, ki ni v abecedi npr. _",
+          "default": {
+            "razred": "CLASS",
+            "konstanta": "CONSTANT",
+            "slovar": "DICTIONARY",
+            "če": "IF",
+            "sicer": "ELSE",
+            "funkcija": "FUNCTION",
+            "import": "IMPORT",
+            "importiraj": "IMPORT",
+            "from": "FROM",
+            "iz": "FROM",
+            "ključ": "KEY",
+            "seznam": "LIST",
+            "metoda": "METHOD",
+            "izpiši": "PRINT",
+            "printaj": "PRINT",
+            "vnos": "INPUT",
+            "vrni": "RETURN",
+            "tip": "TYPE",
+            "spremenljivka": "VARIABLE",
+            "dokler": "WHILE",
+            "zanka": "FOR",
+            "for": "FOR",
+            "v": "IN",
+            "za vsak": "FOR_EACH",
+            "parameter": "PARAMETER",
+            "argument": "ARGUMENT"
+          },
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "slo-handsfree-coding.vscodeObjectsName": {
+          "type": "object",
+          "scope": "application",
+          "description": "Tu lahko spremenite imena objektov, ki jih lahko narekujete. Spreminjajte le vrednosti na levi strani. Če želite odstraniti par, spremenite levo stran na znak, ki ni v abecedi npr. _",
+          "default": {
+            "datoteka": "FILE",
+            "datoteke": "FILE",
+            "dokument": "FILE",
+            "dokumenta": "FILE",
+            "vrstica": "LINE",
+            "vrstico": "LINE",
+            "vidno polje": "VIEW_PORT",
+            "vidnega polja": "VIEW_PORT",
+            "stran": "PAGE",
+            "prazna vrstica": "BLANK_LINE",
+            "prazno vrstico": "BLANK_LINE",
+            "zavihek": "TAB",
+            "zavihka": "TAB",
+            "zavihki": "TAB",
+            "zavihke": "TAB",
+            "definicija": "DEFINITION",
+            "definicijo": "DEFINITION",
+            "definicije": "DEFINITION",
+            "znak": "CHARACTER"
+          },
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "slo-handsfree-coding.directionsName": {
+          "type": "object",
+          "scope": "application",
+          "description": "Tu lahko spremenite imena smeri, ki jih lahko narekujete. Spreminjajte le vrednosti na levi strani. Če želite odstraniti par, spremenite levo stran na znak, ki ni v abecedi npr. _",
+          "default": {
+            "gor": "UP",
+            "dol": "DOWN",
+            "levo": "LEFT",
+            "desno": "RIGHT",
+            "začetek": "START",
+            "konec": "END",
+            "naslednji": "NEXT",
+            "naslednja": "NEXT",
+            "naslednje": "NEXT",
+            "naslednjo": "NEXT",
+            "naprej": "NEXT",
+            "prejšnji": "PREVIOUS",
+            "prejšnja": "PREVIOUS",
+            "prejšnje": "PREVIOUS",
+            "prejšnjo": "PREVIOUS",
+            "nazaj": "PREVIOUS"
+          },
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "slo-handsfree-coding.selectionName": {
+          "type": "object",
+          "scope": "application",
+          "description": "Tu lahko spremenite imena ukazov za izbiro besedila. Spreminjajte le vrednosti na levi strani. Če želite odstraniti par, spremenite levo stran na znak, ki ni v abecedi npr. _",
+          "default": {
+            "vse": "ALL",
+            "več": "MORE",
+            "manj": "LESS",
+            "od": "FROM",
+            "do": "TO",
+            "do konca": "TO_END",
+            "do začetka": "TO_START"
+          },
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "slo-handsfree-coding.terminalActionsName": {
+          "type": "object",
+          "scope": "application",
+          "description": "Tu lahko spremenite imena ukazov, za upravljanje s terminalom (pred temi ukazi morate reči 'terminal' oz. ime, ki ste nastavili za ukaz TERMINAL pod commandsWithParametersName. Spreminjajte le vrednosti na desni strani.",
+          "default": {
+            "nov": "NEW",
+            "pokaži": "SHOW",
+            "odstrani": "KILL",
+            "skrij": "HIDE",
+            "počisti": "CLEAR",
+            "naslednji": "FOCUS_NEXT",
+            "prejšnji": "FOCUS_PREVIOUS",
+            "pojdi gor": "SCROLL_UP",
+            "pojdi dol": "SCROLL_DOWN",
+            "označi vse": "SELECT_ALL"
+          }
+        },
+        "slo-handsfree-coding.specialCharactersName": {
+          "type": "object",
+          "scope": "application",
+          "description": "Tu lahko spremenite imena posebnih znakov ali dodate nov par, če želite da se določena beseda preslika v drugo besedo ali znak (npr \"čas\":\"time\", ki jih lahko narekujete. Spreminjajte le vrednosti na levi strani. Če želite odstraniti par, spremenite levo stran na znak, ki ni v abecedi npr. _",
+          "default": {
+            "klicaj": "!",
+            "vprašaj": "?",
+            "dvopičje": ":",
+            "pomišljaj": "-",
+            "narekovaj": "\"",
+            "enojni narekovaj": "'",
+            "poševnica": "/",
+            "zvezdica": "*",
+            "odstavek": "\t",
+            "tab": "\t",
+            "presledek": " ",
+            "nova vrstica": "\n",
+            "pika": ".",
+            "vejica": ",",
+            "oklepaj": "(",
+            "zaklepaj": ")",
+            "zavit oklepaj": "{",
+            "zavit zalepaj": "}",
+            "oglati oklepaj": "[",
+            "oglati zaklepaj": "]",
+            "plus": "+",
+            "minus": "-",
+            "je enako": "=",
+            "enako": "=",
+            "dvojni enačaj": "==",
+            "manj": "<",
+            "več": ">",
+            "manj ali enako": "<=",
+            "več ali enako": ">=",
+            "ni enako": "!=",
+            "ne enako": "!=",
+            "neenako": "!=",
+            "in": "&",
+            "ali": "|",
+            "lojtra": "#",
+            "procent": "%",
+            "dolar": "$",
+            "podpičje": ";",
+            "afna": "@",
+            "strešica": "^",
+            "leva poševnica": "\\",
+            "backslash": "\\",
+            "iks": "x",
+            "ipsilon": "y",
+            "dvojni ve": "w",
+            "ku": "q"
+          },
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "slo-handsfree-coding.numbersName": {
+          "type": "object",
+          "scope": "application",
+          "description": "Tu lahko spremenite imena števil, ki jih lahko narekujete. Spreminjajte le vrednosti na levi strani. ",
+          "default": {
+            "nič": "0",
+            "en": "1",
+            "ena": "1",
+            "dva": "2",
+            "tri": "3",
+            "štiri": "4",
+            "pet": "5",
+            "šest": "6",
+            "sedem": "7",
+            "osem": "8",
+            "devet": "9"
+          },
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "slo-handsfree-coding.terminalOperationName": {
+          "type": "object",
+          "scope": "application",
+          "description": "Tu lahko spremenite imena operacij, ki jih želite izvesti z ukazom EXECUTE (default: 'izvedi'). Za dodati novo operacijo, napišite na desni strani ime, na levi pa kar želite izpisati v terminal. Znak za novo vrstico ni potreben.",
+          "default": {
+            "poženi": "run",
+            "poženi test": "run test",
+            "seznam datotek": "ls",
+            "pridobi": "git fetch",
+            "povleci": "git pull",
+            "pošlji": "git push"
+          },
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      }
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
@@ -27,15 +354,18 @@
     "lint": "eslint src --ext ts",
     "test": "vscode-test"
   },
+  "dependencies": {
+    "python-shell": "5.0.0"
+  },
   "devDependencies": {
-    "@types/vscode": "^1.91.0",
-    "@types/mocha": "^10.0.7",
-    "@types/node": "20.x",
-    "@typescript-eslint/eslint-plugin": "^7.14.1",
-    "@typescript-eslint/parser": "^7.11.0",
+    "@types/vscode": "^1.89.0",
+    "@types/mocha": "^10.0.6",
+    "@types/node": "18.x",
+    "@typescript-eslint/eslint-plugin": "^7.7.1",
+    "@typescript-eslint/parser": "^7.7.1",
     "eslint": "^8.57.0",
     "typescript": "^5.4.5",
     "@vscode/test-cli": "^0.0.9",
-    "@vscode/test-electron": "^2.4.0"
+    "@vscode/test-electron": "^2.3.9"
   }
 }
