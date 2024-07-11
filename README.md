@@ -21,7 +21,7 @@ For example if there is an image subfolder under your extension project workspac
 If you have any requirements or dependencies, add a section describing those and how to install and configure them.
 
 Ta projekt uporablja python3. Če ga nimate ga prosim naložite.
-Naložite tudi python knjižnici speech_recognition in requests. To lahko storite z `pip install speech_recognition` ter `pip install requests`
+Naložite tudi python knjižnice pyaudio, speech_recognition in requests. To lahko storite z `pip install pyaudio`, `pip install SpeechRecognition` ter `pip install requests` v terminalu.
 Za razpoznavalnik uporablja https://github.com/clarinsi/Slovene_ASR_e2e.
 Če imate težave pri namestitvi razpoznavalnika, poskusite https://github.com/clarinsi/Slovene_ASR_e2e/pull/5
 Za delovanje razpoznavalnika potrebujete docker.

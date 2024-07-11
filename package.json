@@ -96,7 +96,8 @@
             "pokaži vrednost razhroščevanja": "DEBUGGER_SHOW_HOVER",
             "korak ven": "DEBUGGER_STEP_OUT",
             "korak noter": "DEBUGGER_STEP_INTO",
-            "korak": "DEBUGGER_STEP_OVER"
+            "korak": "DEBUGGER_STEP_OVER",
+            "predlagaj": "SUGGESTION"
           },
           "additionalProperties": {
             "type": "string"
@@ -355,17 +356,17 @@
     "test": "vscode-test"
   },
   "dependencies": {
-    "python-shell": "5.0.0"
+    "python-shell": "^5.0.0"
   },
   "devDependencies": {
-    "@types/vscode": "^1.89.0",
     "@types/mocha": "^10.0.6",
     "@types/node": "18.x",
+    "@types/vscode": "^1.89.0",
     "@typescript-eslint/eslint-plugin": "^7.7.1",
     "@typescript-eslint/parser": "^7.7.1",
-    "eslint": "^8.57.0",
-    "typescript": "^5.4.5",
     "@vscode/test-cli": "^0.0.9",
-    "@vscode/test-electron": "^2.3.9"
+    "@vscode/test-electron": "^2.3.9",
+    "eslint": "^8.57.0",
+    "typescript": "^5.4.5"
   }
 }

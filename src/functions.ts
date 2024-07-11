@@ -355,6 +355,16 @@ export const functions = {
         }
     },
 
+    SUGGESTION: async (args: any[]): Promise<dictationMode> => {
+        if (args.length !== 0) {
+            console.error('Invalid arguments for COMPLETE. Expected 0 arguments');
+            return dictationMode.invalid_arguments;
+        } else {
+            await vscode.commands.executeCommand('editor.action.triggerSuggest');
+            return dictationMode.other;
+        }
+    },
+
     ///////////////////////////
     // debug related functions
     ///////////////////////////
@@ -461,11 +471,6 @@ export const functions = {
     ///////////////////////////////////////////////////////
     // from here on are functions with arguments
     ///////////////////////////////////////////////////////
-    GO: GO, //imported at the top of document
-    TERMINAL: TERMINAL, //imported at the top of document
-    SELECT: SELECT, //imported at the top of document
-    DELETE: DELETE, //imported at the top of document
-
 
     EXECUTE: async (args: any[]): Promise<dictationMode> => {
         if (args.length !== 1 || typeof args[0] !== 'string') {
@@ -477,6 +482,11 @@ export const functions = {
         terminal.show();
         terminal.sendText(command);
         return dictationMode.other;
-    }
+    },
+    
+    GO: GO, //imported at the top of document
+    TERMINAL: TERMINAL, //imported at the top of document
+    SELECT: SELECT, //imported at the top of document
+    DELETE: DELETE, //imported at the top of document
 
 };
