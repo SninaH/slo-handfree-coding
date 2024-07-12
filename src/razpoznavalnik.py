@@ -36,7 +36,8 @@ try:
     print(result)
     try:
         print(result.json()["result"])
-    except:
+    except Exception as e:
+        print(e)
         print("unable to print transcription")
         # ne pozabi da tisto kar zazna kot da ni govor zapre v <> npr <laugh>
         # zaznava tudi mašila

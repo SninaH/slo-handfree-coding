@@ -4,7 +4,7 @@ import { tokenType, findTokenType, callFindParameterLocationInPython } from './c
 
 async function add_new_string(text: string, selectionStart?: [number, number], selectionEnd?: [number, number]) {
     const editor = vscode.window.activeTextEditor;
-    if (editor) {
+    if (editor) { 
         const currentPosition = editor.selection.active;
         const newPosition = currentPosition.with(currentPosition.line + 1, 0);
         await editor.edit(editBuilder => {
@@ -113,7 +113,7 @@ const pyObjectToFunction: { [key: string]: () => Promise<void> } = {
     "LIST": async () => {
         await add_new_string(`my_list = []`);
     },
-    "TOUPLE": async () => {
+    "TUPLE": async () => {
         await add_new_string(`my_tuple = (value1, value2)`);
     },
     "DICTIONARY": async () => {
@@ -125,7 +125,9 @@ const pyObjectToFunction: { [key: string]: () => Promise<void> } = {
     "VALUE": async () => {
         await add_new_string(`my_dict[key] = 'value'`);
     },
-
+    "SET": async () => {
+        await add_new_string(`my_set = {value1, value2}`);
+    },
     "IF": async () => {
         await add_new_string(`if condition:
     # Code block
@@ -163,6 +165,19 @@ const pyObjectToFunction: { [key: string]: () => Promise<void> } = {
     },
     "INPUT": async () => {
         await add_new_string(`user_input = input("Enter a value: ")`);
+    },
+    "OPEN": async () => {
+        await add_new_string(`with open('file_name', 'r') as file:
+    # Code block
+    pass`);
+    },
+    "TRY": async () => {
+        await add_new_string(`try:
+    # Code block
+    pass
+except Exception as e:
+    # Code block
+    pass`);
     },
 
     "VARIABLE": async () => {
@@ -310,7 +325,7 @@ async function executeOneToken(kT: tokenType, args: any[]): Promise<dictationMod
 async function executeTwoTokens(kT0: tokenType, kT1: tokenType, args: any[]): Promise<dictationMode | any[]> {
     if (kT0 === tokenType.pyObj && kT1 === tokenType.none) {
         if (pyObjWithNameToFunction[args[0]]) {
-            console.log(`Adding ${args[0]} with name ${args[1]}`);
+            console.log(`Adding new ${args[0]} with name ${args[1]}`);
             await pyObjWithNameToFunction[args[0]](args[1]);
             args = args.slice(2);
             return args;
@@ -335,11 +350,14 @@ async function executeTwoTokens(kT0: tokenType, kT1: tokenType, args: any[]): Pr
 
 async function executeFourTokens(kT0: tokenType, kT1: tokenType, kT2: tokenType, kT3: tokenType, args: any[]): Promise<dictationMode | any[]> {
     if(kT0 === tokenType.pyObj && kT1 === tokenType.none && kT2 === tokenType.pyObj && kT3 === tokenType.none) {
+        console.log("pyObj, none, pyObj, none");
         if(args[2] === "PARAMETER" && pyObjWithNameAndParamToFunction[args[0]]) {
+            console.log(`Adding new ${args[0]} with name ${args[1]} and parameter ${args[3]}`);
             await pyObjWithNameAndParamToFunction[args[0]](args[1], args[3]);
             args = args.slice(3);
             return args;
         }else if(args[0] === "PARAMETER" && pyObjWithNameAndParamToFunction[args[2]]) {
+            console.log(`Adding new ${args[2]} with name ${args[3]} and parameter ${args[1]}`);
             await pyObjWithNameAndParamToFunction[args[2]](args[3], args[1]);
             args = args.slice(3);
             return args;

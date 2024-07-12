@@ -152,6 +152,7 @@
             "seznam": "LIST",
             "tabela": "TUPLE",
             "slovar": "DICTIONARY",
+            "množica": "SET",	
             "ključ": "KEY",
             "vrednost": "VALUE",	
             
@@ -169,9 +170,12 @@
             "izpiši": "PRINT",
             "printaj": "PRINT",
             "vnos": "INPUT",
+            "odpri": "OPEN",
+            "poskus": "TRY",
+            "izjema": "EXCEPT",
             
             "spremenljivka": "VARIABLE",
-            
+
             "tip": "TYPE",
 
             "število": "INTEGER",

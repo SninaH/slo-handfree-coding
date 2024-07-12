@@ -2,6 +2,7 @@ import { Options, PythonShell } from 'python-shell';
 import * as vscode from 'vscode';
 import { dictationMode } from '../functions';
 
+
 export enum tokenType {
     dir = "dir",
     pyObj = "pyObj",
@@ -20,26 +21,52 @@ export const directions = ["UP", "DOWN", "LEFT", "RIGHT", "START", "END", "NEXT"
  * Array of Python objects.
  */
 export const pythonOjects = [
-    "CLASS",
-    "CONSTANT",
-    "DICTIONARY",
-    "ELSE",
-    "FLOAT",
     "FROM",
-    "FUNCTION",
-    "IF",
     "IMPORT",
-    "INPUT",
-    "INTEGER",
-    "KEY",
-    "LIST",
+
+    "CONSTANT",
+
+    "CLASS",
+    "OBJECT",
     "METHOD",
-    "PRINT",
-    "STRING",
+    "FUNCTION",
+    "RETURN",
+    "PARAMETER",
+    "ARGUMENT",	
+
+    "LIST",
+    "TUPLE",
+    "DICTIONARY",
+    "SET",
+    "KEY",
     "VALUE",
-    "VARIABLE",
+
+    "IF",
+    "ELSE",
+
     "WHILE",
-    "TYPE"
+    "FOR_EACH",
+    "FOR",
+    "IN",
+    "RANGE",
+
+    "PRINT",
+    "INPUT",
+    "OPEN",
+    "TRY",
+    "EXCEPT",
+
+    "VARIABLE",
+
+    "TYPE",
+
+    "INTEGER",
+    "LONG",
+    "FLOAT",
+    "COMPLEX",
+    "STRING",
+    "BOOLEAN",
+    "NONE",
 ];
 
 /**
@@ -71,7 +98,7 @@ export function findTokenType(arg: any): tokenType {
 
 
 
-export async function callFindParameterLocationInPython(targetLine: number, targetColumn: number): Promise<[number,number]|false> {
+export async function callFindParameterLocationInPython(context: vscode.ExtensionContext, targetLine: number, targetColumn: number): Promise<[number,number]|false> {
     const editor = vscode.window.activeTextEditor;
     if (!editor) {
         vscode.window.showErrorMessage('No active editor');
@@ -89,12 +116,13 @@ export async function callFindParameterLocationInPython(targetLine: number, targ
     let options: Options = {
         mode: 'text',
         pythonOptions: ['-u'], // unbuffered stdout and stderr
-        scriptPath: 'path/to/your/script',
         args: [targetLine.toString(), targetColumn.toString()]
     };
 
     return new Promise((resolve, reject) => {
-        let pyShell = new PythonShell('find_parameter_location.py', options);
+        // the path to the python script using extension's context
+        const url = context.asAbsolutePath('src/func_with_arg/find_parameter_location.py');
+        let pyShell = new PythonShell(url, options);
 
         pyShell.on('message', function (message) {
             // Attempt to parse the message assuming it's in the format "(line, column)"

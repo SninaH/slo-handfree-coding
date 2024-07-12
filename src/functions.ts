@@ -3,6 +3,7 @@ import GO from './func_with_arg/go';
 import TERMINAL from './func_with_arg/terminal';
 import SELECT from './func_with_arg/select';
 import DELETE from './func_with_arg/delete';
+import NEW from './func_with_arg/new';
 import { CAMEL_CASE, SNAKE_CASE } from './func_with_arg/case';
 
 
@@ -491,5 +492,6 @@ export const functions = {
     DELETE: DELETE, //imported at the top of document
     SNAKE_CASE: SNAKE_CASE, //imported at the top of document
     CAMEL_CASE: CAMEL_CASE, //imported at the top of document
+    NEW: NEW //imported at the top of document
 
 };
