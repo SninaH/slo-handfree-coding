@@ -31,7 +31,7 @@
     "keybindings": [
       {
         "command": "slo-handsfree-coding.listen",
-        "key": "alt+shift+space"
+        "key": "shift+space"
       }
     ],
     "configuration": {
@@ -109,6 +109,8 @@
           "description": "Tu lahko spremenite imena ukazov za urejanje kode in upravljanje urejevalnika. Spreminjajte vrednosti na levi strani. Če želite odstraniti par, spremenite levo stran na znak, ki ni v abecedi npr. _",
           "default": {
             "dodaj": "ADD",
+            "kača": "SNAKE_CASE",
+            "kamela": "CAMEL_CASE",
             "nova": "NEW",
             "nov": "NEW",
             "novo": "NEW",
@@ -131,32 +133,55 @@
           "scope": "application",
           "description": "Tu lahko spremenite imena python objektov, ki jih lahko narekujete. Spreminjajte le vrednosti na levi strani. Če želite odstraniti par, spremenite levo stran na znak, ki ni v abecedi npr. _",
           "default": {
-            "razred": "CLASS",
-            "konstanta": "CONSTANT",
-            "slovar": "DICTIONARY",
-            "če": "IF",
-            "sicer": "ELSE",
-            "funkcija": "FUNCTION",
-            "import": "IMPORT",
-            "importiraj": "IMPORT",
+            
             "from": "FROM",
             "iz": "FROM",
-            "ključ": "KEY",
-            "seznam": "LIST",
+            "import": "IMPORT",
+            "importiraj": "IMPORT",
+            
+            "konstanta": "CONSTANT",
+
+            "razred": "CLASS",
+            "objekt": "OBJECT",
             "metoda": "METHOD",
-            "izpiši": "PRINT",
-            "printaj": "PRINT",
-            "vnos": "INPUT",
+            "funkcija": "FUNCTION",
             "vrni": "RETURN",
-            "tip": "TYPE",
-            "spremenljivka": "VARIABLE",
+            "parameter": "PARAMETER",
+            "argument": "ARGUMENT",
+            
+            "seznam": "LIST",
+            "tabela": "TUPLE",
+            "slovar": "DICTIONARY",
+            "ključ": "KEY",
+            "vrednost": "VALUE",	
+            
+            "če": "IF",
+            "sicer": "ELSE",
+            
             "dokler": "WHILE",
+            "za vsak": "FOR_EACH",
             "zanka": "FOR",
             "for": "FOR",
             "v": "IN",
-            "za vsak": "FOR_EACH",
-            "parameter": "PARAMETER",
-            "argument": "ARGUMENT"
+            "obseg": "RANGE",
+            "obsegu": "RANGE",
+            
+            "izpiši": "PRINT",
+            "printaj": "PRINT",
+            "vnos": "INPUT",
+            
+            "spremenljivka": "VARIABLE",
+            
+            "tip": "TYPE",
+
+            "število": "INTEGER",
+            "dolgo število": "LONG",
+            "decimalno število": "FLOAT",
+            "kompleksno število": "COMPLEX",
+            "niz": "STRING",
+            "logična vrednost": "BOOLEAN",
+            "noben": "NONE"
+            
           },
           "additionalProperties": {
             "type": "string"

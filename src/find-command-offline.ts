@@ -18,6 +18,24 @@ async function executeFunctionByName(fName: string, args: any[]): Promise<dictat
     }
 }
 
+function splitText(inputText: string, splitAndConvertNumbers = true): (string | number)[] {
+    
+    let parts: string[];
+    let filteredAndParsedParts: (string | number)[];
+    if(splitAndConvertNumbers) {
+        // Split the input text on spaces before capital letters or numbers and after capital letters or numbers
+        parts = inputText.split(/(?<=[A-Z\d])\s+|\s+(?=[A-Z\d])/);
+    // Filter out any empty strings and convert numeric strings to numbers
+        filteredAndParsedParts = parts.filter(part => part !== '').map(part => {
+        return isNaN(Number(part)) ? part : Number(part);
+    });} else {
+        parts = inputText.split(/(?<=[A-Z])\s+|\s+(?=[A-Z])/);
+        filteredAndParsedParts = parts.filter(part => part !== '');
+    }
+
+    return filteredAndParsedParts;
+}
+
 // Get the function name and its arguments 
 async function getNameAndArgs(transcription: string): Promise<[string, any[]]> {
     //TODO add support for multiple commands in one transcription
@@ -52,9 +70,7 @@ async function getNameAndArgs(transcription: string): Promise<[string, any[]]> {
                 argsString = changeKeyWithObjectValue(argsString, vsObjects); //replace objects keys with their values/codes
                 argsString = changeKeyWithObjectValue(argsString, direction); //replace keywords keys with their values/codes
                 argsString = changeNumbers(argsString); //replace words for numbers with numbers
-                args = argsString.split(/\s+(?=[A-Z0-9])/); //split by space before capital letter or number because values/codes are in uppercase and we want also numbers as parameters
-                args = args.filter(arg => /^[A-Z0-9_]+$/.test(arg)); // Keep only elements that consist of capital letters or numbers or _
-                args = args.map(arg => isNaN(Number(arg)) ? arg : Number(arg)); // Convert number strings to numbers
+                args = splitText(argsString);
 
             } else if (commandValue === "EXECUTE") {
                 const terminalOperationName = await vscode.workspace.getConfiguration('slo-handsfree-coding').get('terminalOperationName') as { [key: string]: string };
@@ -77,19 +93,23 @@ async function getNameAndArgs(transcription: string): Promise<[string, any[]]> {
                 argsString = changeKeyWithObjectValue(argsString, vsObjects); //replace objects keys with their values/codes
                 argsString = changeKeyWithObjectValue(argsString, direction); //replace keywords keys with their values/codes
                 argsString = changeNumbers(argsString); //replace words for numbers with numbers
-                args = argsString.split(/\s+(?=[A-Z0-9])/); //split by space before capital letter or number because values/codes are in uppercase and we want also numbers as parameters
-            }
-            
-            else {
+                args = splitText(argsString);
+            } else if (commandValue === "NEW"){
+                argsString = changeKeyWithObjectValue(argsString, pyObjects); //replace objects keys with their values/codes
+                argsString = changeKeyWithObjectValue(argsString, vsObjects, ["LINE", "BLANK_LINE", "FILE", "TAB"]); //replace objects keys with their values/codes
+                argsString = changeNumbers(argsString); //replace words for numbers with numbers
+                args = splitText(argsString, false);
+            } else if (commandValue === "SNAKE_CASE" || commandValue === "CAMEL_CASE" || commandValue === "PASCAL_CASE" || commandValue === "CAMEL_CASE") {
+                argsString = changeNumbers(argsString); //replace words for numbers with numbers
+                args = [argsString];
+            } else {
                 argsString = changeKeyWithObjectValue(argsString, pyObjects); //replace objects keys with their values/codes
                 argsString = changeKeyWithObjectValue(argsString, vsObjects); //replace objects keys with their values/codes
                 argsString = changeKeyWithObjectValue(argsString, direction); //replace keywords keys with their values/codes
+                argsString = changeKeyWithObjectValue(argsString, selection); //replace objects keys with their values/codes
                 argsString = changeNumbers(argsString); //replace words for numbers with numbers
-                args = argsString.split(/\s+(?=[A-Z0-9])/); //split by space before capital letter or number because values/codes are in uppercase and we want also numbers as parameters
+                args = splitText(argsString);
             }
-
-
-            args = args.filter(arg => arg !== ""); // Remove empty strings from arguments
 
             console.log(`found command ${commands[key]} and arguments ${args}`);
             return [commandValue, args];
