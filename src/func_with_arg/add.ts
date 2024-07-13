@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { dictationMode } from '../functions';
+import { dictationMode, changeSpecialCharacters } from '../functions';
 import { tokenType, findTokenType } from './common_stuff';
 
 /**
@@ -215,6 +215,11 @@ async function executeOneToken(context: vscode.ExtensionContext, kT0: tokenType,
             await pyObjectToFunction[pyObj]();
             return args.slice(1);
         }
+    }
+    else if (kT0 === tokenType.none) {
+        const text = changeSpecialCharacters(args[0]);
+        await add_string(text);
+        return args.slice(1);
     }
     return dictationMode.invalid_arguments;
 }
