@@ -59,7 +59,7 @@ export default class Extension {
             transcription = transcription.replace(/⁇/g, '');
             vscode.window.showInformationMessage(transcription);
             //procesiraj ukaz
-            let command: dictationMode = await CommandHandler(transcription, this.narekovanje, this.posebniZnaki, this.crkuj);
+            let command: dictationMode = await CommandHandler(this.context, transcription, this.narekovanje, this.posebniZnaki, this.crkuj);
             console.log(command);
 
             if (command === dictationMode.dictate) {

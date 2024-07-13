@@ -157,6 +157,7 @@
             "vrednost": "VALUE",	
             
             "če": "IF",
+            "ali če": "ELIF",
             "sicer": "ELSE",
             
             "dokler": "WHILE",

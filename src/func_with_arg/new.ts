@@ -4,7 +4,7 @@ import { tokenType, findTokenType, callFindParameterLocationInPython } from './c
 
 async function add_new_string(text: string, selectionStart?: [number, number], selectionEnd?: [number, number]) {
     const editor = vscode.window.activeTextEditor;
-    if (editor) { 
+    if (editor) {
         const currentPosition = editor.selection.active;
         const newPosition = currentPosition.with(currentPosition.line + 1, 0);
         await editor.edit(editBuilder => {
@@ -48,7 +48,11 @@ async function add_at_position(text: string, line: number, character: number) {
 
     }
 }
-const pyObjectToFunction: { [key: string]: () => Promise<void> } = {
+
+// Define a helper type for the functions
+type PyFunc = (() => Promise<void>) | ((context: vscode.ExtensionContext) => Promise<void>);
+
+const pyObjectToFunction: { [key: string]: PyFunc } = {
     "IMPORT": async () => {
         await add_new_string(`import module_name`);
     },
@@ -93,14 +97,14 @@ const pyObjectToFunction: { [key: string]: () => Promise<void> } = {
     "RETURN": async () => {
         await add_new_string(`return value`);
     },
-    "PARAMETER": async () => {
+    "PARAMETER": async (context: vscode.ExtensionContext) => {
         const currentLine = vscode.window.activeTextEditor?.selection.active.line;
         const currentColumn = vscode.window.activeTextEditor?.selection.active.character;
         if (currentLine !== undefined && currentColumn !== undefined) {
             try {
-                const result = await callFindParameterLocationInPython(currentLine, currentColumn);
-                if (result){
-                    add_at_position("parameter",result[0], result[1]);
+                const result = await callFindParameterLocationInPython(context, currentLine, currentColumn);
+                if (result) {
+                    add_at_position("parameter", result[0], result[1]);
                 }
             } catch (e) {
                 console.log(e);
@@ -130,6 +134,11 @@ const pyObjectToFunction: { [key: string]: () => Promise<void> } = {
     },
     "IF": async () => {
         await add_new_string(`if condition:
+    # Code block
+    pass`);
+    },
+    "ELIF": async () => {
+        await add_new_string(`elif condition:
     # Code block
     pass`);
     },
@@ -295,10 +304,23 @@ const vsObjectToFunction: { [key: string]: () => Promise<void> } = {
 
 };
 
-async function executeOneToken(kT: tokenType, args: any[]): Promise<dictationMode | any[]> {
+// Example type guard function to determine if PyFunc takes no arguments
+// without this functon TypeScript does not know that func takes no arguments and throws an error smh-.-
+function isWithoutParameter(func: PyFunc): func is (() => Promise<void>) {
+    return func.length === 0;
+}
+async function executeOneToken(context: vscode.ExtensionContext, kT: tokenType, args: any[]): Promise<dictationMode | any[]> {
+    console.log(`executeOneToken: ${kT}, ${args}`);
     if (kT === tokenType.pyObj) {
-        if (pyObjectToFunction[args[0]]) {
-            await pyObjectToFunction[args[0]]();
+        const func: PyFunc = pyObjectToFunction[args[0]];
+        if (func) {
+            if (isWithoutParameter(func)) {
+                // TypeScript now knows func must take no arguments
+                await func();
+            } else {
+                // TypeScript is assured this function takes a context argument
+                await func(context);
+            }
             args = args.slice(1);
             return args;
         } else {
@@ -322,7 +344,7 @@ async function executeOneToken(kT: tokenType, args: any[]): Promise<dictationMod
     }
 }
 
-async function executeTwoTokens(kT0: tokenType, kT1: tokenType, args: any[]): Promise<dictationMode | any[]> {
+async function executeTwoTokens(context: vscode.ExtensionContext, kT0: tokenType, kT1: tokenType, args: any[]): Promise<dictationMode | any[]> {
     if (kT0 === tokenType.pyObj && kT1 === tokenType.none) {
         if (pyObjWithNameToFunction[args[0]]) {
             console.log(`Adding new ${args[0]} with name ${args[1]}`);
@@ -330,8 +352,7 @@ async function executeTwoTokens(kT0: tokenType, kT1: tokenType, args: any[]): Pr
             args = args.slice(2);
             return args;
         } else {
-            console.log(`Invalid argument: ${args[0]}`);
-            return dictationMode.invalid_arguments;
+            return await executeOneToken(context, kT0, args);
         }
     } else if (kT0 === tokenType.none && kT1 === tokenType.pyObj) {
         if (pyObjWithNameToFunction[args[1]]) {
@@ -339,49 +360,42 @@ async function executeTwoTokens(kT0: tokenType, kT1: tokenType, args: any[]): Pr
             args = args.slice(2);
             return args;
         } else {
-            console.log(`Invalid argument: ${args[1]}`);
-            return dictationMode.invalid_arguments;
+            return await executeOneToken(context, kT1, args);
         }
     } else {
-        return await executeOneToken(kT0, args);
+        return await executeOneToken(context, kT0, args);
     }
 
 }
 
-async function executeFourTokens(kT0: tokenType, kT1: tokenType, kT2: tokenType, kT3: tokenType, args: any[]): Promise<dictationMode | any[]> {
-    if(kT0 === tokenType.pyObj && kT1 === tokenType.none && kT2 === tokenType.pyObj && kT3 === tokenType.none) {
+async function executeFourTokens(context: vscode.ExtensionContext, kT0: tokenType, kT1: tokenType, kT2: tokenType, kT3: tokenType, args: any[]): Promise<dictationMode | any[]> {
+    if (kT0 === tokenType.pyObj && kT1 === tokenType.none && kT2 === tokenType.pyObj && kT3 === tokenType.none) {
         console.log("pyObj, none, pyObj, none");
-        if(args[2] === "PARAMETER" && pyObjWithNameAndParamToFunction[args[0]]) {
+        if (args[2] === "PARAMETER" && pyObjWithNameAndParamToFunction[args[0]]) {
             console.log(`Adding new ${args[0]} with name ${args[1]} and parameter ${args[3]}`);
             await pyObjWithNameAndParamToFunction[args[0]](args[1], args[3]);
             args = args.slice(3);
             return args;
-        }else if(args[0] === "PARAMETER" && pyObjWithNameAndParamToFunction[args[2]]) {
+        } else if (args[0] === "PARAMETER" && pyObjWithNameAndParamToFunction[args[2]]) {
             console.log(`Adding new ${args[2]} with name ${args[3]} and parameter ${args[1]}`);
             await pyObjWithNameAndParamToFunction[args[2]](args[3], args[1]);
             args = args.slice(3);
             return args;
         }
-        else {
-            console.log(`Invalid argument: ${args[0]}`);
-            return dictationMode.invalid_arguments;
-        }
+
     } else if (kT0 === tokenType.none && kT1 === tokenType.pyObj && kT2 === tokenType.none && kT3 === tokenType.pyObj) {
-        if(args[3] === "PARAMETER" && pyObjWithNameAndParamToFunction[args[1]]) {
+        if (args[3] === "PARAMETER" && pyObjWithNameAndParamToFunction[args[1]]) {
             await pyObjWithNameAndParamToFunction[args[1]](args[0], args[2]);
             args = args.slice(4);
             return args;
-        }else if(args[1] === "PARAMETER" && pyObjWithNameAndParamToFunction[args[3]]) {
+        } else if (args[1] === "PARAMETER" && pyObjWithNameAndParamToFunction[args[3]]) {
             await pyObjWithNameAndParamToFunction[args[3]](args[2], args[0]);
             args = args.slice(4);
             return args;
-        } 
-        else {
-            console.log(`Invalid argument: ${args[1]}`);
-            return dictationMode.invalid_arguments;
         }
+
     } else if (kT0 === tokenType.none && kT1 === tokenType.pyObj && kT2 === tokenType.pyObj && kT3 === tokenType.none) {
-        if(args[2] === "PARAMETER" && pyObjWithNameAndParamToFunction[args[1]]) {
+        if (args[2] === "PARAMETER" && pyObjWithNameAndParamToFunction[args[1]]) {
             await pyObjWithNameAndParamToFunction[args[1]](args[0], args[3]);
             args = args.slice(3);
             return args;
@@ -390,22 +404,26 @@ async function executeFourTokens(kT0: tokenType, kT1: tokenType, kT2: tokenType,
             args = args.slice(3);
             return args;
         }
-        else {
-            console.log(`Invalid argument: ${args[1]}`);
-            return dictationMode.invalid_arguments;
-        }
+
     }
-    else {
-        return await executeTwoTokens(kT0, kT1, args);
-    }
+
+    return await executeTwoTokens(context, kT0, kT1, args);
+
 }
 
 export default async function NEW(args: any[]): Promise<dictationMode> {
+    let context: vscode.ExtensionContext;
+    try{context = args[0]; args = args.slice(1);}
+    catch(e){
+        console.log(e);
+        console.log(`args[0] for NEW should be context.`);
+        return dictationMode.invalid_arguments;
+    }
     while (args.length > 0) {
         const kT0 = findTokenType(args[0]);
         if (args.length === 1) {
-            
-            const result = await executeOneToken(kT0, args);
+
+            const result = await executeOneToken(context, kT0, args);
             if (result instanceof Array) {
                 args = result;
                 continue;
@@ -415,7 +433,7 @@ export default async function NEW(args: any[]): Promise<dictationMode> {
         }
         const kT1 = findTokenType(args[1]);
         if (args.length === 2 || args.length === 3) {
-            const result = await executeTwoTokens(kT0, kT1, args);
+            const result = await executeTwoTokens(context, kT0, kT1, args);
             if (result instanceof Array) {
                 args = result;
                 continue;
@@ -425,7 +443,7 @@ export default async function NEW(args: any[]): Promise<dictationMode> {
         }
         const kT2 = findTokenType(args[2]);
         const kT3 = findTokenType(args[3]);
-        const result = await executeFourTokens(kT0, kT1, kT2, kT3, args);
+        const result = await executeFourTokens(context, kT0, kT1, kT2, kT3, args);
         if (result instanceof Array) {
             args = result;
             continue;

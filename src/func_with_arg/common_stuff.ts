@@ -42,6 +42,7 @@ export const pythonOjects = [
     "VALUE",
 
     "IF",
+    "ELIF",
     "ELSE",
 
     "WHILE",
@@ -114,8 +115,6 @@ export async function callFindParameterLocationInPython(context: vscode.Extensio
     const content = editor.document.getText();
 
     let options: Options = {
-        mode: 'text',
-        pythonOptions: ['-u'], // unbuffered stdout and stderr
         args: [targetLine.toString(), targetColumn.toString()]
     };
 
@@ -125,8 +124,8 @@ export async function callFindParameterLocationInPython(context: vscode.Extensio
         let pyShell = new PythonShell(url, options);
 
         pyShell.on('message', function (message) {
-            // Attempt to parse the message assuming it's in the format "(line, column)"
-            const locationMatch = message.match(/\((\d+), (\d+)\)/);
+            // Attempt to parse the message assuming it's in the format "Add parameter after 'some_parameter', line: 4, column: 29."
+            const locationMatch = message.match(/line: (\d+), column: (\d+)/);
             if (locationMatch) {
                 // If the message matches the expected format, resolve with the location [line, column]
                 resolve([locationMatch[1], locationMatch[2]]);
