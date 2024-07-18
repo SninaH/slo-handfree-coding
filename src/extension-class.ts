@@ -95,6 +95,7 @@ export default class Extension {
             } else if (this.pressedStopButton) {
                 this.narekovanje = false;
                 this.posebniZnaki = true;
+                this.crkuj = false;
                 this.pressedStopButton = false;
                 this.stopButton.text = `$(stop-circle) Stop poslušanje`;
             }
