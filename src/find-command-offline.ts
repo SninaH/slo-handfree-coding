@@ -10,16 +10,43 @@ import * as vscode from 'vscode';
 async function executeFunctionByName(fName: string, args: any[]): Promise<dictationMode> {
     const func = functions[fName as keyof typeof functions]; // Add an index signature to allow indexing with a string
     if (typeof func === 'function') {
-        const r = await func(args); // Change the spread operator to a rest parameter
+        
+        const r = await func(args);
         return r;
+        
     } else {
         console.error(`Function ${fName} not found.`);
+        vscode.window.showErrorMessage(`Funkcija ${fName} ni bila najdena.`);
         return dictationMode.function_not_found;
     }
 }
 
+/**
+ * split the tokens and numbers from the input text
+ * @param inputText 
+ * @param splitAndConvertNumbers is true by default. If false, the function will not convert numeric strings to numbers nor split them from the rest of the text
+ * @returns 
+ */
+function splitText(inputText: string, splitAndConvertNumbers = true): (string | number)[] {
+    
+    let parts: string[];
+    let filteredAndParsedParts: (string | number)[];
+    if(splitAndConvertNumbers) {
+        // Split the input text on spaces before capital letters or numbers and after capital letters or numbers
+        parts = inputText.split(/(?<=[A-Z\d])\s+|\s+(?=[A-Z\d])/);
+    // Filter out any empty strings and convert numeric strings to numbers
+        filteredAndParsedParts = parts.filter(part => part !== '').map(part => {
+        return isNaN(Number(part)) ? part : Number(part);
+    });} else {
+        parts = inputText.split(/(?<=[A-Z])\s+|\s+(?=[A-Z])/);
+        filteredAndParsedParts = parts.filter(part => part !== '');
+    }
+
+    return filteredAndParsedParts;
+}
+
 // Get the function name and its arguments 
-async function getNameAndArgs(transcription: string): Promise<[string, any[]]> {
+async function getNameAndArgs(context: vscode.ExtensionContext, transcription: string): Promise<[string, any[]]> {
     //TODO add support for multiple commands in one transcription
 
     //get commands without parameters
@@ -52,9 +79,7 @@ async function getNameAndArgs(transcription: string): Promise<[string, any[]]> {
                 argsString = changeKeyWithObjectValue(argsString, vsObjects); //replace objects keys with their values/codes
                 argsString = changeKeyWithObjectValue(argsString, direction); //replace keywords keys with their values/codes
                 argsString = changeNumbers(argsString); //replace words for numbers with numbers
-                args = argsString.split(/\s+(?=[A-Z0-9])/); //split by space before capital letter or number because values/codes are in uppercase and we want also numbers as parameters
-                args = args.filter(arg => /^[A-Z0-9_]+$/.test(arg)); // Keep only elements that consist of capital letters or numbers or _
-                args = args.map(arg => isNaN(Number(arg)) ? arg : Number(arg)); // Convert number strings to numbers
+                args = splitText(argsString);
 
             } else if (commandValue === "EXECUTE") {
                 const terminalOperationName = await vscode.workspace.getConfiguration('slo-handsfree-coding').get('terminalOperationName') as { [key: string]: string };
@@ -77,19 +102,33 @@ async function getNameAndArgs(transcription: string): Promise<[string, any[]]> {
                 argsString = changeKeyWithObjectValue(argsString, vsObjects); //replace objects keys with their values/codes
                 argsString = changeKeyWithObjectValue(argsString, direction); //replace keywords keys with their values/codes
                 argsString = changeNumbers(argsString); //replace words for numbers with numbers
-                args = argsString.split(/\s+(?=[A-Z0-9])/); //split by space before capital letter or number because values/codes are in uppercase and we want also numbers as parameters
-            }
-            
-            else {
+                args = splitText(argsString);
+            } else if (commandValue === "NEW"){
+                argsString = changeKeyWithObjectValue(argsString, pyObjects); //replace objects keys with their values/codes
+                argsString = changeKeyWithObjectValue(argsString, vsObjects, ["LINE", "BLANK_LINE", "FILE", "TAB"]); //replace objects keys with their values/codes
+                argsString = changeNumbers(argsString); //replace words for numbers with numbers
+                args = splitText(argsString, false);
+                //NEW needs context to call python script to search parameter location
+                args.unshift(context);
+            } else if (commandValue === "ADD") {
+                argsString = changeKeyWithObjectValue(argsString, pyObjects); //replace objects keys with their values/codes
+                argsString = changeKeyWithObjectValue(argsString, vsObjects, ["LINE", "BLANK_LINE"]); //replace objects keys with their values/codes only for LINE and BLANK_LINE
+                argsString = changeNumbers(argsString); //replace words for numbers with numbers
+                args = splitText(argsString, false);
+                //ADD needs context to call python script to search parameter location
+                args.unshift(context);
+
+            }else if (commandValue === "SNAKE_CASE" || commandValue === "CAMEL_CASE" || commandValue === "PASCAL_CASE" || commandValue === "CAMEL_CASE") {
+                argsString = changeNumbers(argsString); //replace words for numbers with numbers
+                args = [argsString];
+            } else {
                 argsString = changeKeyWithObjectValue(argsString, pyObjects); //replace objects keys with their values/codes
                 argsString = changeKeyWithObjectValue(argsString, vsObjects); //replace objects keys with their values/codes
                 argsString = changeKeyWithObjectValue(argsString, direction); //replace keywords keys with their values/codes
+                argsString = changeKeyWithObjectValue(argsString, selection); //replace objects keys with their values/codes
                 argsString = changeNumbers(argsString); //replace words for numbers with numbers
-                args = argsString.split(/\s+(?=[A-Z0-9])/); //split by space before capital letter or number because values/codes are in uppercase and we want also numbers as parameters
+                args = splitText(argsString);
             }
-
-
-            args = args.filter(arg => arg !== ""); // Remove empty strings from arguments
 
             console.log(`found command ${commands[key]} and arguments ${args}`);
             return [commandValue, args];
@@ -114,7 +153,7 @@ function matchStringWithKeysOfValue(s: string, value: string, obj: { [key: strin
 }
 //process the transcription and execute the command
 //return name of command
-export default async function findCommandOffline(transcription: string, narekovanje: boolean, posebniZnaki: boolean, crkuj: boolean): Promise<dictationMode> {
+export default async function findCommandOffline(context: vscode.ExtensionContext ,transcription: string, narekovanje: boolean, posebniZnaki: boolean, crkuj: boolean): Promise<dictationMode> {
     let dicMode = dictationMode.other;
     if (transcription === "") {
         return dictationMode.no_command_found;
@@ -162,7 +201,7 @@ export default async function findCommandOffline(transcription: string, narekova
     else {
         console.log("currently in command mode");
         // Get the function name and its arguments
-        const [fName, args] = await getNameAndArgs(transcription);
+        const [fName, args] = await getNameAndArgs(context, transcription);
         if (fName === "") {
             console.log("no command found");
             return dictationMode.no_command_found;

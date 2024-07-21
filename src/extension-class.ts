@@ -59,7 +59,7 @@ export default class Extension {
             transcription = transcription.replace(/⁇/g, '');
             vscode.window.showInformationMessage(transcription);
             //procesiraj ukaz
-            let command: dictationMode = await CommandHandler(transcription, this.narekovanje, this.posebniZnaki, this.crkuj);
+            let command: dictationMode = await CommandHandler(this.context, transcription, this.narekovanje, this.posebniZnaki, this.crkuj);
             console.log(command);
 
             if (command === dictationMode.dictate) {
@@ -95,6 +95,7 @@ export default class Extension {
             } else if (this.pressedStopButton) {
                 this.narekovanje = false;
                 this.posebniZnaki = true;
+                this.crkuj = false;
                 this.pressedStopButton = false;
                 this.stopButton.text = `$(stop-circle) Stop poslušanje`;
             }

@@ -3,6 +3,8 @@ import GO from './func_with_arg/go';
 import TERMINAL from './func_with_arg/terminal';
 import SELECT from './func_with_arg/select';
 import DELETE from './func_with_arg/delete';
+import NEW from './func_with_arg/new';
+import { CAMEL_CASE, SNAKE_CASE } from './func_with_arg/case';
 
 
 export const enum dictationMode {
@@ -355,6 +357,16 @@ export const functions = {
         }
     },
 
+    SUGGESTION: async (args: any[]): Promise<dictationMode> => {
+        if (args.length !== 0) {
+            console.error('Invalid arguments for COMPLETE. Expected 0 arguments');
+            return dictationMode.invalid_arguments;
+        } else {
+            await vscode.commands.executeCommand('editor.action.triggerSuggest');
+            return dictationMode.other;
+        }
+    },
+
     ///////////////////////////
     // debug related functions
     ///////////////////////////
@@ -461,11 +473,6 @@ export const functions = {
     ///////////////////////////////////////////////////////
     // from here on are functions with arguments
     ///////////////////////////////////////////////////////
-    GO: GO, //imported at the top of document
-    TERMINAL: TERMINAL, //imported at the top of document
-    SELECT: SELECT, //imported at the top of document
-    DELETE: DELETE, //imported at the top of document
-
 
     EXECUTE: async (args: any[]): Promise<dictationMode> => {
         if (args.length !== 1 || typeof args[0] !== 'string') {
@@ -477,6 +484,14 @@ export const functions = {
         terminal.show();
         terminal.sendText(command);
         return dictationMode.other;
-    }
+    },
+    
+    GO: GO, //imported at the top of document
+    TERMINAL: TERMINAL, //imported at the top of document
+    SELECT: SELECT, //imported at the top of document
+    DELETE: DELETE, //imported at the top of document
+    SNAKE_CASE: SNAKE_CASE, //imported at the top of document
+    CAMEL_CASE: CAMEL_CASE, //imported at the top of document
+    NEW: NEW //imported at the top of document
 
 };
