@@ -126,6 +126,8 @@ async function getNameAndArgs(context: vscode.ExtensionContext, transcription: s
             } else if (commandValue === "SUGGESTION") {
                 argsString = changeKeyWithObjectValue(argsString, suggestion); 
                 args = splitText(argsString);
+            } else if (commandValue === "ADD_SELECTED_TEXT_AS_TERMINAL_ACTION") {
+                args = [argsString];
             } else {
                 argsString = changeKeyWithObjectValue(argsString, pyObjects); 
                 argsString = changeKeyWithObjectValue(argsString, vsObjects); 

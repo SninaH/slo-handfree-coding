@@ -171,35 +171,6 @@ export const functions = {
             return dictationMode.spell;
         }
     },
-    EXECUTE_TEXT_IN_EDITOR: async (args: any[]): Promise<dictationMode> => {
-        if (args.length !== 0) {
-            console.error('Invalid arguments for EXECUTE. Expected 0 arguments');
-            return dictationMode.invalid_arguments;
-        }
-        //execute whats written in editor
-        const terminal = vscode.window.activeTerminal || vscode.window.createTerminal();
-        terminal.show();
-        const editor = vscode.window.activeTextEditor;
-        if (editor) {
-            const text = editor.document.getText();
-            terminal.sendText(text + '\n');
-            return dictationMode.other;
-        } else {
-            return dictationMode.no_active_editor;
-        }
-
-    },
-    EXECUTE_SELECTED_TEXT_IN_EDITOR: async (args: any[]): Promise<dictationMode> => {
-        if (args.length !== 0) {
-            console.error('Invalid arguments for EXECUTE_SELECTED_TEXT_IN_EDITOR. Expected 0 arguments');
-            return dictationMode.invalid_arguments;
-        }
-        //execute selected text in editor
-        const terminal = vscode.window.activeTerminal || vscode.window.createTerminal();
-        terminal.show();
-        vscode.commands.executeCommand('workbench.action.terminal.runSelectedText');
-        return dictationMode.other;
-    },
 
     STOP: (args: any[]): dictationMode => {
         if (args.length !== 0) {
@@ -483,6 +454,39 @@ export const functions = {
         }
     },
 
+    ///////////////////////////////////////////////////////
+    // from here on are terminal related functions
+    ///////////////////////////////////////////////////////
+    EXECUTE_TEXT_IN_EDITOR: async (args: any[]): Promise<dictationMode> => {
+        if (args.length !== 0) {
+            console.error('Invalid arguments for EXECUTE. Expected 0 arguments');
+            return dictationMode.invalid_arguments;
+        }
+        //execute whats written in editor
+        const terminal = vscode.window.activeTerminal || vscode.window.createTerminal();
+        terminal.show();
+        const editor = vscode.window.activeTextEditor;
+        if (editor) {
+            const text = editor.document.getText();
+            terminal.sendText(text + '\n');
+            return dictationMode.other;
+        } else {
+            return dictationMode.no_active_editor;
+        }
+
+    },
+    EXECUTE_SELECTED_TEXT_IN_EDITOR: async (args: any[]): Promise<dictationMode> => {
+        if (args.length !== 0) {
+            console.error('Invalid arguments for EXECUTE_SELECTED_TEXT_IN_EDITOR. Expected 0 arguments');
+            return dictationMode.invalid_arguments;
+        }
+        //execute selected text in editor
+        const terminal = vscode.window.activeTerminal || vscode.window.createTerminal();
+        terminal.show();
+        vscode.commands.executeCommand('workbench.action.terminal.runSelectedText');
+        return dictationMode.other;
+    },
+
 
     ///////////////////////////////////////////////////////
     // from here on are functions with arguments
@@ -498,6 +502,25 @@ export const functions = {
         terminal.show();
         terminal.sendText(command);
         return dictationMode.other;
+    },
+
+    ADD_SELECTED_TEXT_AS_TERMINAL_ACTION: async (args: any[]): Promise<dictationMode> => {
+        if (args.length !== 1) {
+            console.error('Invalid arguments for ADD_SELECTED_TEXT_AS_TERMINAL_ACTION. Expected 1 argument');
+            return dictationMode.invalid_arguments;
+        }
+        //add selected text as terminal action
+        //get selected text from editor
+        const editor = vscode.window.activeTextEditor;
+        if (editor) {
+            const text = editor.document.getText(editor.selection);
+            //add selected text to settings terminalOperationName as value with key from args
+            const terminalOperations = vscode.workspace.getConfiguration('slo-handsfree-coding').get('terminalOperations') as { [key: string]: string };
+            terminalOperations[args[0]] = text;
+            return dictationMode.other;
+        } else {
+            return dictationMode.no_active_editor;
+        }
     },
     
     GO: GO, //imported at the top of document
