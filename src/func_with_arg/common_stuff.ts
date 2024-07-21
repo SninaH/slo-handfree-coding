@@ -1,6 +1,5 @@
 import { Options, PythonShell } from 'python-shell';
 import * as vscode from 'vscode';
-import { dictationMode } from '../functions';
 
 
 export enum tokenType {
@@ -9,7 +8,8 @@ export enum tokenType {
     vsObj = "vsObj",
     none = "none",
     number = "number",
-    selection = "selection"
+    selection = "selection",
+    suggestion = "suggestion"
 }
 
 /**
@@ -77,6 +77,8 @@ export const vscodeObjects = ["LINE", "FILE", "VIEW_PORT", "BLANK_LINE", "TAB", 
 
 export const selection = ["ALL", "MORE", "LESS", "FROM", "TO", "TO_START", "TO_END"];
 
+export const suggestions = ["SHOW", "HIDE", "ACCEPT"];
+
 export function findTokenType(arg: any): tokenType {
 
     if (typeof arg === 'number') {
@@ -90,6 +92,8 @@ export function findTokenType(arg: any): tokenType {
             return tokenType.pyObj;
         } else if (selection.includes(arg)) {
             return tokenType.selection;
+        } else if (suggestions.includes(arg)){
+            return tokenType.suggestion;
         }
     }
     return tokenType.none;

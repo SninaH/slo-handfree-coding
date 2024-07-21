@@ -4,6 +4,7 @@ import TERMINAL from './func_with_arg/terminal';
 import SELECT from './func_with_arg/select';
 import DELETE from './func_with_arg/delete';
 import NEW from './func_with_arg/new';
+import SUGGESTION from './func_with_arg/suggestion';
 import { CAMEL_CASE, SNAKE_CASE } from './func_with_arg/case';
 
 
@@ -38,6 +39,27 @@ export const changeKeyWithObjectValue = (text: string, obj: { [key: string]: str
     const keysSortedByLengthDesc = Object.keys(obj).sort((a, b) => b.length - a.length);
     const regex = new RegExp(`\\b(${keysSortedByLengthDesc.join('|')})\\b`, 'g');
     return text.replace(regex, match => obj[match]); //replace method returns new string
+};
+
+export const changeFirstOccurence = (text: string, obj: { [key: string]: string }, allowedKeywords?: string[], multipleOccurence?: string[]): string => {
+    if (allowedKeywords !== undefined) {
+        obj = Object.fromEntries(Object.entries(obj).filter(([key, value]) => allowedKeywords.includes(value)));
+    }
+    //change keys with values so that it prioritizes longer keys (for example 'enojni narekovaj' before 'narekovaj')
+    //find and change key with value only for the first occurence of the key except for key that has value in multipleOccurence
+    const keysSortedByLengthDesc = Object.keys(obj).sort((a, b) => b.length - a.length);
+    const regex = new RegExp(`\\b(${keysSortedByLengthDesc.join('|')})\\b`, 'g');
+    let usedValue: Set<string> = new Set();
+    return text.replace(regex, match => {
+        if (multipleOccurence && multipleOccurence.includes(obj[match])) {
+            return obj[match];
+        }
+        if (!usedValue.has(obj[match])) {
+            usedValue.add(obj[match]);
+            return obj[match];
+        }
+        return match;
+    });
 };
 
 export const changeSpecialCharacters = (text: string): string => {
@@ -357,15 +379,7 @@ export const functions = {
         }
     },
 
-    SUGGESTION: async (args: any[]): Promise<dictationMode> => {
-        if (args.length !== 0) {
-            console.error('Invalid arguments for COMPLETE. Expected 0 arguments');
-            return dictationMode.invalid_arguments;
-        } else {
-            await vscode.commands.executeCommand('editor.action.triggerSuggest');
-            return dictationMode.other;
-        }
-    },
+    
 
     ///////////////////////////
     // debug related functions
@@ -492,6 +506,7 @@ export const functions = {
     DELETE: DELETE, //imported at the top of document
     SNAKE_CASE: SNAKE_CASE, //imported at the top of document
     CAMEL_CASE: CAMEL_CASE, //imported at the top of document
-    NEW: NEW //imported at the top of document
+    NEW: NEW, //imported at the top of document
+    SUGGESTION: SUGGESTION, //imported at the top of document
 
 };

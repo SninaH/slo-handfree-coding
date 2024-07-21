@@ -96,8 +96,7 @@
             "pokaži vrednost razhroščevanja": "DEBUGGER_SHOW_HOVER",
             "korak ven": "DEBUGGER_STEP_OUT",
             "korak noter": "DEBUGGER_STEP_INTO",
-            "korak": "DEBUGGER_STEP_OVER",
-            "predlagaj": "SUGGESTION"
+            "korak": "DEBUGGER_STEP_OVER"
           },
           "additionalProperties": {
             "type": "string"
@@ -122,7 +121,9 @@
             "pojdi": "GO",
             "go": "GO",
             "izvedi": "EXECUTE",
-            "terminal": "TERMINAL"
+            "terminal": "TERMINAL",
+            "predlog": "SUGGESTION",
+            "predlagaj": "SUGGESTION"
           },
           "additionalProperties": {
             "type": "string"
@@ -281,6 +282,19 @@
             "označi vse": "SELECT_ALL"
           }
         },
+        "slo-handsfree-coding.suggestionName":{
+          "type": "object",
+          "scope": "application",
+          "description": "Tu lahko spremenite imena ukazov za predlog (SUGGESTION), ki jih lahko narekujete. Spreminjajte le vrednosti na levi strani. Če želite odstraniti par, spremenite levo stran na znak, ki ni v abecedi npr. _",
+          "default": {
+            "sprejmi": "ACCEPT",
+            "pokaži": "SHOW"
+          },
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+
         "slo-handsfree-coding.specialCharactersName": {
           "type": "object",
           "scope": "application",

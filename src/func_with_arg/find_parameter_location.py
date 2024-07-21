@@ -1,6 +1,32 @@
 import ast
 import sys
 
+#for testing
+##########################################################
+from io import StringIO
+
+# Step 1: Convert the code to a multi-line string
+code_as_string = """def function1():
+    # Example function
+    pass
+
+class MyClass:
+    def __init__(self):
+        # Constructor method
+        pass
+
+    def method1(self):
+        # Example method
+        pass
+
+    # Add more methods as needed
+"""
+
+# Step 2: Simulate sys.stdin input
+sys.stdin = StringIO(code_as_string)
+
+######################################################33333
+
 class ParameterLocationFinder(ast.NodeVisitor):
     def __init__(self, target_line, target_column):
         self.target_line = target_line
@@ -52,8 +78,10 @@ def find_parameter_location(target_line, target_column):
 
 if __name__ == "__main__":
     try:
-        target_line = int(sys.argv[1])
-        target_column = int(sys.argv[2])  # Assuming column information is also provided
+        # target_line = int(sys.argv[1])
+        # target_column = int(sys.argv[2])  # Assuming column information is also provided
+        target_line = 2
+        target_column = 9
     except ValueError:
         print("Invalid input: Line and column numbers must be integers.")
         sys.exit(1)

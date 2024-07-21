@@ -3,6 +3,7 @@
 import { functions } from './functions';
 import { dictationMode } from './functions';
 import { changeKeyWithObjectValue } from './functions';
+import { changeFirstOccurence } from './functions';
 import { changeNumbers } from './functions';
 import * as vscode from 'vscode';
 
@@ -61,6 +62,7 @@ async function getNameAndArgs(context: vscode.ExtensionContext, transcription: s
     const vsObjects = await vscode.workspace.getConfiguration('slo-handsfree-coding').get('vscodeObjectsName') as { [key: string]: string };
     const direction = await vscode.workspace.getConfiguration('slo-handsfree-coding').get('directionsName') as { [key: string]: string };
     const selection = await vscode.workspace.getConfiguration('slo-handsfree-coding').get('selectionName') as { [key: string]: string };
+    const suggestion = await vscode.workspace.getConfiguration('slo-handsfree-coding').get('suggestionName') as { [key: string]: string };
 
     for (let key in commands) {
         let idx_substring = transcription.indexOf(key);
@@ -104,7 +106,7 @@ async function getNameAndArgs(context: vscode.ExtensionContext, transcription: s
                 argsString = changeNumbers(argsString); //replace words for numbers with numbers
                 args = splitText(argsString);
             } else if (commandValue === "NEW"){
-                argsString = changeKeyWithObjectValue(argsString, pyObjects); //replace objects keys with their values/codes
+                argsString = changeFirstOccurence(argsString, pyObjects, undefined, ["PARAMETER"]); //replace objects keys with their values/codes
                 argsString = changeKeyWithObjectValue(argsString, vsObjects, ["LINE", "BLANK_LINE", "FILE", "TAB"]); //replace objects keys with their values/codes
                 argsString = changeNumbers(argsString); //replace words for numbers with numbers
                 args = splitText(argsString, false);
@@ -121,11 +123,15 @@ async function getNameAndArgs(context: vscode.ExtensionContext, transcription: s
             }else if (commandValue === "SNAKE_CASE" || commandValue === "CAMEL_CASE" || commandValue === "PASCAL_CASE" || commandValue === "CAMEL_CASE") {
                 argsString = changeNumbers(argsString); //replace words for numbers with numbers
                 args = [argsString];
+            } else if (commandValue === "SUGGESTION") {
+                argsString = changeKeyWithObjectValue(argsString, suggestion); 
+                args = splitText(argsString);
             } else {
-                argsString = changeKeyWithObjectValue(argsString, pyObjects); //replace objects keys with their values/codes
-                argsString = changeKeyWithObjectValue(argsString, vsObjects); //replace objects keys with their values/codes
-                argsString = changeKeyWithObjectValue(argsString, direction); //replace keywords keys with their values/codes
-                argsString = changeKeyWithObjectValue(argsString, selection); //replace objects keys with their values/codes
+                argsString = changeKeyWithObjectValue(argsString, pyObjects); 
+                argsString = changeKeyWithObjectValue(argsString, vsObjects); 
+                argsString = changeKeyWithObjectValue(argsString, direction); 
+                argsString = changeKeyWithObjectValue(argsString, selection); 
+                argsString = changeKeyWithObjectValue(argsString, suggestion); 
                 argsString = changeNumbers(argsString); //replace words for numbers with numbers
                 args = splitText(argsString);
             }

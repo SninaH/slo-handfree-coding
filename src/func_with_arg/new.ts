@@ -271,6 +271,7 @@ const pyObjWithNameToFunction: { [key: string]: (name: string) => Promise<void> 
 
 };
 
+//TODO: multiple parameters
 const pyObjWithNameAndParamToFunction: { [key: string]: (name: string, param: string) => Promise<void> } = {
     "FUNCTION": async (name: string, param: string) => {
         const snakeCaseName = name.split(' ').join('_').toLowerCase();
