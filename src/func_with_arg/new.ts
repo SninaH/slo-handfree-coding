@@ -11,6 +11,7 @@ async function add_new_string(text: string, selectionStart?: [number, number], s
             editBuilder.insert(newPosition, `\n${text}`);
         });
 
+        // If selectionStart and selectionEnd are provided, select the text that was added
         if (selectionStart !== undefined && selectionEnd !== undefined) {
             const newSelection = new vscode.Selection(newPosition.line + 1 + selectionStart[0], newPosition.character + selectionStart[1], newPosition.line + 1 + selectionEnd[0], newPosition.character + selectionEnd[1]);
             editor.selection = newSelection;
@@ -21,30 +22,13 @@ async function add_new_string(text: string, selectionStart?: [number, number], s
 async function add_at_position(text: string, line: number, character: number) {
     const editor = vscode.window.activeTextEditor;
     if (editor) {
-        const newPosition = new vscode.Position(line, character);
+        // add text in editor at line and character
+        const position = new vscode.Position(line, character);
+        console.log("position:");
+        console.log(position);
         await editor.edit(editBuilder => {
-            editBuilder.insert(newPosition, text);
+            editBuilder.insert(position, text);
         });
-        // select the inserted text
-        const startPosition = new vscode.Position(line, character);
-        let endLine = line;
-        let endCharacter = character;
-
-        // Calculate the end position
-        const textLines = text.split('\n');
-        if (textLines.length === 1) {
-            // If the text is on the same line
-            endCharacter += text.length;
-        } else {
-            // If the text contains new lines
-            endLine += textLines.length - 1;
-            endCharacter = textLines[textLines.length - 1].length;
-        }
-
-        const endPosition = new vscode.Position(endLine, endCharacter);
-        // Create a new selection from start to end position
-        const newSelection = new vscode.Selection(startPosition, endPosition);
-        editor.selection = newSelection;
 
     }
 }
@@ -104,7 +88,14 @@ const pyObjectToFunction: { [key: string]: PyFunc } = {
             try {
                 const result = await callFindParameterLocationInPython(context, currentLine, currentColumn);
                 if (result) {
-                    add_at_position("parameter", result[0], result[1]);
+                    const line = result[0] - 1; // line is 0-indexed in vscode
+                    const character = result[1];
+                    console.log(`line: ${line}, character: ${character}`);
+                    if (result[2]) {
+                        await add_at_position(", parameter", line, character);
+                    } else {
+                        await add_at_position("parameter", line, character);
+                    }
                 }
             } catch (e) {
                 console.log(e);
@@ -218,7 +209,10 @@ except Exception as e:
 
 };
 
-const pyObjWithNameToFunction: { [key: string]: (name: string) => Promise<void> } = {
+// Define a helper type for the functions
+type PyFuncWithName = ((name: string) => Promise<void>) | ((name: string, context: vscode.ExtensionContext) => Promise<void>);
+
+const pyObjWithNameToFunction: { [key: string]: PyFuncWithName } = {
     "CONSTANT": async (name: string) => {
         const snakeCaseName = name.split(' ').join('_').toUpperCase();
         await add_new_string(`${snakeCaseName} = None`);
@@ -268,7 +262,27 @@ const pyObjWithNameToFunction: { [key: string]: (name: string) => Promise<void> 
         const snakeCaseName = name.split(' ').join('_').toLowerCase();
         await add_new_string(`${snakeCaseName} = None`);
     },
-
+    "PARAMETER": async (name: string, context: vscode.ExtensionContext) => {
+        const currentLine = vscode.window.activeTextEditor?.selection.active.line;
+        const currentColumn = vscode.window.activeTextEditor?.selection.active.character;
+        if (currentLine !== undefined && currentColumn !== undefined) {
+            try {
+                const result = await callFindParameterLocationInPython(context, currentLine, currentColumn);
+                if (result) {
+                    const line = result[0] - 1; // line is 0-indexed in vscode
+                    const character = result[1];
+                    console.log(`line: ${line}, character: ${character}`);
+                    if (result[2]) {
+                        await add_at_position(", " + name, line, character);
+                    } else {
+                        await add_at_position(name, line, character);
+                    }
+                }
+            } catch (e) {
+                console.log(e);
+            }
+        }
+    },
 };
 
 //TODO: multiple parameters
@@ -310,6 +324,11 @@ const vsObjectToFunction: { [key: string]: () => Promise<void> } = {
 function isWithoutParameter(func: PyFunc): func is (() => Promise<void>) {
     return func.length === 0;
 }
+
+function isWithoutContextParameter(func: PyFuncWithName): func is ((name: string) => Promise<void>) {
+    return func.length === 1;
+}
+
 async function executeOneToken(context: vscode.ExtensionContext, kT: tokenType, args: any[]): Promise<dictationMode | any[]> {
     console.log(`executeOneToken: ${kT}, ${args}`);
     if (kT === tokenType.pyObj) {
@@ -347,20 +366,34 @@ async function executeOneToken(context: vscode.ExtensionContext, kT: tokenType, 
 
 async function executeTwoTokens(context: vscode.ExtensionContext, kT0: tokenType, kT1: tokenType, args: any[]): Promise<dictationMode | any[]> {
     if (kT0 === tokenType.pyObj && kT1 === tokenType.none) {
-        if (pyObjWithNameToFunction[args[0]]) {
-            console.log(`Adding new ${args[0]} with name ${args[1]}`);
-            await pyObjWithNameToFunction[args[0]](args[1]);
+        const func: PyFuncWithName = pyObjWithNameToFunction[args[0]];
+        if (func) {
+            if (isWithoutContextParameter(func)) {
+                console.log(`Adding new ${args[0]} with name ${args[1]}`);
+                await func(args[1]);
+            } else {
+                console.log(`Adding new ${args[0]} with name ${args[1]}`);
+                await func(args[1], context);
+            }
             args = args.slice(2);
             return args;
         } else {
             return await executeOneToken(context, kT0, args);
         }
     } else if (kT0 === tokenType.none && kT1 === tokenType.pyObj) {
-        if (pyObjWithNameToFunction[args[1]]) {
-            await pyObjWithNameToFunction[args[1]](args[0]);
+        const func: PyFuncWithName = pyObjWithNameToFunction[args[1]];
+        if (func) {
+            if (isWithoutContextParameter(func)) {
+                console.log(`Adding new ${args[1]} with name ${args[0]}`);
+                await func(args[0]);
+            } else {
+                console.log(`Adding new ${args[1]} with name ${args[0]}`);
+                await func(args[0], context);
+            }
             args = args.slice(2);
             return args;
-        } else {
+        }
+        else {
             return await executeOneToken(context, kT1, args);
         }
     } else {
@@ -414,8 +447,8 @@ async function executeFourTokens(context: vscode.ExtensionContext, kT0: tokenTyp
 
 export default async function NEW(args: any[]): Promise<dictationMode> {
     let context: vscode.ExtensionContext;
-    try{context = args[0]; args = args.slice(1);}
-    catch(e){
+    try { context = args[0]; args = args.slice(1); }
+    catch (e) {
         console.log(e);
         console.log(`args[0] for NEW should be context.`);
         return dictationMode.invalid_arguments;

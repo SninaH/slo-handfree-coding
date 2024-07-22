@@ -13,6 +13,7 @@ export default class Extension {
     private narekovanje: boolean = false;
     private posebniZnaki: boolean = true;
     private crkuj: boolean = false;
+    private capsLock: boolean = false;
     private context: vscode.ExtensionContext;
     private pressedStopButton: boolean = false;
     startListeningOnClick: vscode.Disposable;
@@ -59,7 +60,7 @@ export default class Extension {
             transcription = transcription.replace(/⁇/g, '');
             vscode.window.showInformationMessage(transcription);
             //procesiraj ukaz
-            let command: dictationMode = await CommandHandler(this.context, transcription, this.narekovanje, this.posebniZnaki, this.crkuj);
+            let command: dictationMode = await CommandHandler(this.context, transcription, this.narekovanje, this.posebniZnaki, this.crkuj, this.capsLock);
             console.log(command);
 
             if (command === dictationMode.dictate) {
@@ -72,8 +73,12 @@ export default class Extension {
                 this.narekovanje = false;
                 this.posebniZnaki = true;
                 this.crkuj = false;
+                this.capsLock = false;
             } else if (command === dictationMode.spell) {
                 this.crkuj = true;
+            } else if (command === dictationMode.spell_uppercase) {
+                this.crkuj = true;
+                this.capsLock = true;
             } else if (command === dictationMode.no_command_found) {
                 vscode.window.showInformationMessage('Noben ukaz ni bil najden');
             } else if (command === dictationMode.execution_failed) {
@@ -88,6 +93,7 @@ export default class Extension {
                 this.narekovanje = false;
                 this.posebniZnaki = true;
                 this.crkuj = false;
+                this.capsLock = false;
             }
             //če ukaz ni 'stop', nadaljujemo z poslušanjem
             else if (!this.pressedStopButton) {
@@ -96,6 +102,7 @@ export default class Extension {
                 this.narekovanje = false;
                 this.posebniZnaki = true;
                 this.crkuj = false;
+                this.capsLock = false;
                 this.pressedStopButton = false;
                 this.stopButton.text = `$(stop-circle) Stop poslušanje`;
             }

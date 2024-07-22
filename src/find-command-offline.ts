@@ -11,10 +11,10 @@ import * as vscode from 'vscode';
 async function executeFunctionByName(fName: string, args: any[]): Promise<dictationMode> {
     const func = functions[fName as keyof typeof functions]; // Add an index signature to allow indexing with a string
     if (typeof func === 'function') {
-        
+
         const r = await func(args);
         return r;
-        
+
     } else {
         console.error(`Function ${fName} not found.`);
         vscode.window.showErrorMessage(`Funkcija ${fName} ni bila najdena.`);
@@ -29,16 +29,17 @@ async function executeFunctionByName(fName: string, args: any[]): Promise<dictat
  * @returns 
  */
 function splitText(inputText: string, splitAndConvertNumbers = true): (string | number)[] {
-    
+
     let parts: string[];
     let filteredAndParsedParts: (string | number)[];
-    if(splitAndConvertNumbers) {
+    if (splitAndConvertNumbers) {
         // Split the input text on spaces before capital letters or numbers and after capital letters or numbers
         parts = inputText.split(/(?<=[A-Z\d])\s+|\s+(?=[A-Z\d])/);
-    // Filter out any empty strings and convert numeric strings to numbers
+        // Filter out any empty strings and convert numeric strings to numbers
         filteredAndParsedParts = parts.filter(part => part !== '').map(part => {
-        return isNaN(Number(part)) ? part : Number(part);
-    });} else {
+            return isNaN(Number(part)) ? part : Number(part);
+        });
+    } else {
         parts = inputText.split(/(?<=[A-Z])\s+|\s+(?=[A-Z])/);
         filteredAndParsedParts = parts.filter(part => part !== '');
     }
@@ -63,6 +64,7 @@ async function getNameAndArgs(context: vscode.ExtensionContext, transcription: s
     const direction = await vscode.workspace.getConfiguration('slo-handsfree-coding').get('directionsName') as { [key: string]: string };
     const selection = await vscode.workspace.getConfiguration('slo-handsfree-coding').get('selectionName') as { [key: string]: string };
     const suggestion = await vscode.workspace.getConfiguration('slo-handsfree-coding').get('suggestionName') as { [key: string]: string };
+    const terminalActionsName = await vscode.workspace.getConfiguration('slo-handsfree-coding').get('terminalActionsName') as { [key: string]: string };
 
     for (let key in commands) {
         let idx_substring = transcription.indexOf(key);
@@ -73,15 +75,17 @@ async function getNameAndArgs(context: vscode.ExtensionContext, transcription: s
             //now get the arguments
             let argsString = transcription.substring(idx_substring + key.length).trim(); //get substring after the command
             let args: any[] = [];
-            if(argsString === "") {
+            if (argsString === "") {
                 return [commandValue, []];
             }
             if (commandValue === "GO") {
-                // argsString = changeKeyWithObjectValue(argsString, pyObjects, ["CLASS", "FUNCTION"]); //replace objects keys with their values/codes
-                argsString = changeKeyWithObjectValue(argsString, vsObjects); //replace objects keys with their values/codes
-                argsString = changeKeyWithObjectValue(argsString, direction); //replace keywords keys with their values/codes
+                argsString = changeKeyWithObjectValue(argsString, pyObjects, ["PARAMETER"]); //replace objects keys with their values/codes
+                argsString = changeKeyWithObjectValue(argsString, vsObjects);
+                argsString = changeKeyWithObjectValue(argsString, direction);
                 argsString = changeNumbers(argsString); //replace words for numbers with numbers
                 args = splitText(argsString);
+                //GO needs context to call python script to search parameter location
+                args.unshift(context);
 
             } else if (commandValue === "EXECUTE") {
                 const terminalOperationName = await vscode.workspace.getConfiguration('slo-handsfree-coding').get('terminalOperationName') as { [key: string]: string };
@@ -95,7 +99,7 @@ async function getNameAndArgs(context: vscode.ExtensionContext, transcription: s
                         break;
                     }
                 }
-                if(args.length === 0) {
+                if (args.length === 0) {
                     console.error("No terminal operation found");
                     return ["", []];
                 }
@@ -105,7 +109,9 @@ async function getNameAndArgs(context: vscode.ExtensionContext, transcription: s
                 argsString = changeKeyWithObjectValue(argsString, direction); //replace keywords keys with their values/codes
                 argsString = changeNumbers(argsString); //replace words for numbers with numbers
                 args = splitText(argsString);
-            } else if (commandValue === "NEW"){
+                //SELECT needs context to send to GO if needed
+                args.unshift(context);
+            } else if (commandValue === "NEW") {
                 argsString = changeFirstOccurence(argsString, pyObjects, undefined, ["PARAMETER"]); //replace objects keys with their values/codes
                 argsString = changeKeyWithObjectValue(argsString, vsObjects, ["LINE", "BLANK_LINE", "FILE", "TAB"]); //replace objects keys with their values/codes
                 argsString = changeNumbers(argsString); //replace words for numbers with numbers
@@ -120,20 +126,24 @@ async function getNameAndArgs(context: vscode.ExtensionContext, transcription: s
                 //ADD needs context to call python script to search parameter location
                 args.unshift(context);
 
-            }else if (commandValue === "SNAKE_CASE" || commandValue === "CAMEL_CASE" || commandValue === "PASCAL_CASE" || commandValue === "CAMEL_CASE") {
+            } else if (commandValue === "SNAKE_CASE" || commandValue === "CAMEL_CASE") {
                 argsString = changeNumbers(argsString); //replace words for numbers with numbers
                 args = [argsString];
             } else if (commandValue === "SUGGESTION") {
-                argsString = changeKeyWithObjectValue(argsString, suggestion); 
+                argsString = changeKeyWithObjectValue(argsString, suggestion);
                 args = splitText(argsString);
-            } else if (commandValue === "ADD_SELECTED_TEXT_AS_TERMINAL_ACTION") {
+            } else if (commandValue === "TERMINAL") {
+                argsString = changeKeyWithObjectValue(argsString, terminalActionsName);
+                args = splitText(argsString, false);
+
+            } else if (commandValue === "ADD_SELECTED_TEXT_AS_TERMINAL_ACTION" || commandValue === "CAPS_LOCK") {
                 args = [argsString];
             } else {
-                argsString = changeKeyWithObjectValue(argsString, pyObjects); 
-                argsString = changeKeyWithObjectValue(argsString, vsObjects); 
-                argsString = changeKeyWithObjectValue(argsString, direction); 
-                argsString = changeKeyWithObjectValue(argsString, selection); 
-                argsString = changeKeyWithObjectValue(argsString, suggestion); 
+                argsString = changeKeyWithObjectValue(argsString, pyObjects);
+                argsString = changeKeyWithObjectValue(argsString, vsObjects);
+                argsString = changeKeyWithObjectValue(argsString, direction);
+                argsString = changeKeyWithObjectValue(argsString, selection);
+                argsString = changeKeyWithObjectValue(argsString, suggestion);
                 argsString = changeNumbers(argsString); //replace words for numbers with numbers
                 args = splitText(argsString);
             }
@@ -161,12 +171,12 @@ function matchStringWithKeysOfValue(s: string, value: string, obj: { [key: strin
 }
 //process the transcription and execute the command
 //return name of command
-export default async function findCommandOffline(context: vscode.ExtensionContext ,transcription: string, narekovanje: boolean, posebniZnaki: boolean, crkuj: boolean): Promise<dictationMode> {
+export default async function findCommandOffline(context: vscode.ExtensionContext, transcription: string, narekovanje: boolean, posebniZnaki: boolean, crkuj: boolean, caps: boolean): Promise<dictationMode> {
     let dicMode = dictationMode.other;
     if (transcription === "") {
         return dictationMode.no_command_found;
     }
-    if(crkuj) {
+    if (crkuj) {
         const commands = vscode.workspace.getConfiguration('slo-handsfree-coding').get('commandsName') as { [key: string]: string };
         if (matchStringWithKeysOfValue(transcription, "STOP_DICTATING", commands)) {
             console.log("stop spelling");
@@ -176,7 +186,7 @@ export default async function findCommandOffline(context: vscode.ExtensionContex
             return dictationMode.stop;
         }
         dicMode = dictationMode.spell;
-        await executeFunctionByName('spelling', [transcription]);
+        await executeFunctionByName('spelling', [caps, transcription]);
     }
     if (narekovanje && posebniZnaki) {
         const commands = vscode.workspace.getConfiguration('slo-handsfree-coding').get('commandsName') as { [key: string]: string };

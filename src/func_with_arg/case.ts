@@ -36,3 +36,16 @@ export async function CAMEL_CASE(args: any[]): Promise<dictationMode> {
     }
     catch (e) { console.log(e); return dictationMode.execution_failed; }
 }
+
+export async function CAPS_LOCK(args: any[]): Promise<dictationMode> {
+    try {
+        if (args.length !== 1) {
+            console.log('Invalid number of arguments');
+            return dictationMode.invalid_arguments;
+        }
+        const capsLock: string = args[0].toUpperCase();
+        functions.insert_plain_text([capsLock]);
+        return dictationMode.other;
+    }
+    catch (e) { console.log(e); return dictationMode.execution_failed; }
+}

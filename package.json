@@ -55,6 +55,7 @@
           "description": "Tu lahko spremenite imena ukazov za urejanje kode in upravljanje urejevalnika. Spreminjajte le vrednosti na levi strani. Če želite odstraniti par, spremenite levo stran na znak, ki ni v abecedi npr. _",
           "default": {
             "črkuj": "SPELL",
+            "črkuj z velikimi": "SPELL_UPPERCASE",
             "narekuj": "DICTATE",
             "narekuj brez posebnih znakov": "DICTATE_WITHOUT_SPECIAL_CHARACTERS",
             "narekovanje brez posebnih znakov": "DICTATE_WITHOUT_SPECIAL_CHARACTERS",
@@ -67,6 +68,7 @@
             "nehaj": "STOP",
             "nehaj poslušati": "STOP",
             "nehaj poslušat": "STOP",
+
             "izvedi": "EXECUTE_TEXT_IN_EDITOR",
             "izvedi označeno": "EXECUTE_SELECTED_TEXT_IN_EDITOR",
             
@@ -74,6 +76,7 @@
             "shrani": "SAVE_FILE",
             "shrani kot": "SAVE_FILE_AS",
             "zapri zavihek": "CLOSE_TAB",
+            "zapri okno": "CLOSE_WINDOW",
             "novo okno": "NEW_WINDOW",
             "nova datoteka": "NEW_FILE",
             "odpri": "OPEN",
@@ -87,6 +90,7 @@
             "formatiraj": "FORMAT",
             "polepšaj": "FORMAT",
             "zamakni": "SHIFT",
+            
             "prekinitvena točka": "DEBUGGER_BREAKPOINT",
             "prekinitvena točka na mestu": "DEBUGGER_INLINE_BREAKPOINT",
             "začni razhroščevanje": "DEBUGGER_START",
@@ -96,7 +100,7 @@
             "pokaži vrednost razhroščevanja": "DEBUGGER_SHOW_HOVER",
             "korak ven": "DEBUGGER_STEP_OUT",
             "korak noter": "DEBUGGER_STEP_INTO",
-            "korak": "DEBUGGER_STEP_OVER"
+            "korak čez": "DEBUGGER_STEP_OVER"
           },
           "additionalProperties": {
             "type": "string"
@@ -110,6 +114,8 @@
             "dodaj": "ADD",
             "kača": "SNAKE_CASE",
             "kamela": "CAMEL_CASE",
+            "velika": "UPPER_CASE",
+            "z veliko": "UPPER_CASE",
             "nova": "NEW",
             "nov": "NEW",
             "novo": "NEW",
@@ -217,7 +223,8 @@
             "definicija": "DEFINITION",
             "definicijo": "DEFINITION",
             "definicije": "DEFINITION",
-            "znak": "CHARACTER"
+            "znak": "CHARACTER",
+            "beseda": "WORD"
           },
           "additionalProperties": {
             "type": "string"

@@ -1,10 +1,21 @@
 import * as vscode from 'vscode';
 import { dictationMode } from '../functions';
-import { tokenType, findTokenType } from './common_stuff';
+import { tokenType, findTokenType, callFindParameterLocationInPython } from './common_stuff';
 
 
 function moveToLine(lineNumber: number, editor: vscode.TextEditor): void {
     const position = new vscode.Position(lineNumber - 1, 0); // Lines are zero-indexed
+    if (position.isAfterOrEqual(editor.document.lineAt(editor.document.lineCount - 1).range.end)) {
+        // Position is beyond the last line of the document
+        console.log('Position is beyond the last line of the document');
+        return;
+    }
+    editor.selection = new vscode.Selection(position, position);
+    editor.revealRange(new vscode.Range(position, position)); // Scrolls to the position
+}
+
+function moveToLineAndCol(lineNumber: number, colNumber: number, editor: vscode.TextEditor): void {
+    const position = new vscode.Position(lineNumber - 1, colNumber); // Lines are zero-indexed
     if (position.isAfterOrEqual(editor.document.lineAt(editor.document.lineCount - 1).range.end)) {
         // Position is beyond the last line of the document
         console.log('Position is beyond the last line of the document');
@@ -22,6 +33,23 @@ async function moveObj(obj: string): Promise<boolean> {
     return false;
 }
 
+const PyTokenToFunctions: { [key: string]: (context: vscode.ExtensionContext, editor: vscode.TextEditor) => Promise<void> } = {
+    "PARAMETER": async (context: vscode.ExtensionContext, editor: vscode.TextEditor) => {
+        const currentLine = vscode.window.activeTextEditor?.selection.active.line;
+        const currentColumn = vscode.window.activeTextEditor?.selection.active.character;
+        if (currentLine !== undefined && currentColumn !== undefined) {
+            try {
+                const result = await callFindParameterLocationInPython(context, currentLine, currentColumn);
+                if (result) {
+                    moveToLineAndCol(result[0], result[1], editor);
+                }
+            } catch (e) {
+                console.log(e);
+            }
+        }
+    }
+};
+
 const DirToFunctions: { [key: string]: () => Promise<void> } = {
     "UP": async () => {
         await vscode.commands.executeCommand('cursorMove', {
@@ -36,16 +64,10 @@ const DirToFunctions: { [key: string]: () => Promise<void> } = {
         });
     },
     "LEFT": async () => {
-        await vscode.commands.executeCommand('cursorMove', {
-            to: 'left',
-            by: 'character',
-        });
+        await vscode.commands.executeCommand('cursorWordPartLeft');
     },
     "RIGHT": async () => {
-        await vscode.commands.executeCommand('cursorMove', {
-            to: 'right',
-            by: 'character',
-        });
+        await vscode.commands.executeCommand('cursorWordPartRight');
     },
     "START": async () => {
         await vscode.commands.executeCommand('cursorHome');
@@ -97,6 +119,44 @@ const NumObjDirToFunctions: { [key: string]: (num: number) => Promise<void> } = 
             by: 'line',
             value: num,
         });
+    },
+    "9+|CHARACTER|LEFT": async (num: number) => {
+        await vscode.commands.executeCommand('cursorMove', {
+            to: 'left',
+            by: 'character',
+            value: num,
+        });
+    },
+    "9+|CHARACTER|RIGHT": async (num: number) => {
+        await vscode.commands.executeCommand('cursorMove', {
+            to: 'right',
+            by: 'character',
+            value: num,
+        });
+    },
+    "9-|CHARACTER|LEFT": async (num: number) => {
+        await vscode.commands.executeCommand('cursorMove', {
+            to: 'left',
+            by: 'character',
+            value: num,
+        });
+    },
+    "9-|CHARACTER|RIGHT": async (num: number) => {
+        await vscode.commands.executeCommand('cursorMove', {
+            to: 'right',
+            by: 'character',
+            value: num,
+        });
+    },
+    "9-|WORD|LEFT": async (num: number) => {
+        for (let i = 0; i < num; i++) {
+            await vscode.commands.executeCommand('cursorWordStartLeft');
+        }
+    },
+    "9-|WORD|RIGHT": async (num: number) => {
+        for (let i = 0; i < num; i++) {
+            await vscode.commands.executeCommand('cursorWordEndRight');
+        }
     },
     "9-|PAGE|UP": async (num: number) => {
         for (let i = 0; i < num; i++) {
@@ -224,11 +284,35 @@ const ObjDirToFunctions: { [key: string]: () => Promise<void> } = {
             by: 'character',
         });
     },
+    "CHARACTER|PREVIOUS": async () => {
+        await vscode.commands.executeCommand('cursorMove', {
+            to: 'left',
+            by: 'character',
+        });
+    },
     "CHARACTER|RIGHT": async () => {
         await vscode.commands.executeCommand('cursorMove', {
             to: 'right',
             by: 'character',
         });
+    },
+    "CHARACTER|NEXT": async () => {
+        await vscode.commands.executeCommand('cursorMove', {
+            to: 'right',
+            by: 'character',
+        });
+    },
+    "WORD|LEFT": async () => {
+        await vscode.commands.executeCommand('cursorWordStartLeft');
+    },
+    "WORD|PREVIOUS": async () => {
+        await vscode.commands.executeCommand('cursorWordStartLeft');
+    },
+    "WORD|RIGHT": async () => {
+        await vscode.commands.executeCommand('cursorWordEndRight');
+    },
+    "WORD|NEXT": async () => {
+        await vscode.commands.executeCommand('cursorWordEndRight');
     },
     "FILE|START": async () => {
         await vscode.commands.executeCommand('cursorMove', {
@@ -377,7 +461,7 @@ function validTokenCombination(args0: [string | number, tokenType], args1: [stri
 
 }
 
-async function executeOneToken(kT0: tokenType, args: any[]): Promise<dictationMode | any[]> {
+async function executeOneToken(kT0: tokenType, args: any[], context: vscode.ExtensionContext): Promise<dictationMode | any[]> {
     if (kT0 === tokenType.number) {
         const editor = vscode.window.activeTextEditor;
         if (!editor) {
@@ -403,16 +487,32 @@ async function executeOneToken(kT0: tokenType, args: any[]): Promise<dictationMo
         }
         args = args.slice(1);
         return args;
-    } else {
+    } else if (kT0 === tokenType.pyObj) {
+        const func = PyTokenToFunctions[args[0]];
+        if (func) {
+            const editor = vscode.window.activeTextEditor;
+            if (!editor) {
+                return dictationMode.no_active_editor;
+            }
+            await func(context, editor);
+            args = args.slice(1);
+            return args;
+        } else {
+            console.log(`invalid argument ${args[0]}`);
+            return dictationMode.invalid_arguments;
+        }
+    }
+    
+    else {
         return dictationMode.invalid_arguments;
     }
 }
 
-async function executeTwoTokens(kT0: tokenType, kT1: tokenType, args: any[]): Promise<dictationMode | any[]> {
+async function executeTwoTokens(kT0: tokenType, kT1: tokenType, args: any[], context: vscode.ExtensionContext): Promise<dictationMode | any[]> {
     console.log("start of executeTwoTokens");
     const valid = validTokenCombination([args[0], kT0], [args[1], kT1]);
     if (valid[1] === "") {
-        const result = await executeOneToken(kT0, args);
+        const result = await executeOneToken(kT0, args, context);
         if (result instanceof Array) {
             args = result;
             return args;
@@ -449,10 +549,10 @@ async function executeTwoTokens(kT0: tokenType, kT1: tokenType, args: any[]): Pr
     }
 }
 
-async function executeThreeTokens(kT0: tokenType, kT1: tokenType, kT2: tokenType, args: any[]): Promise<dictationMode | any[]> {
+async function executeThreeTokens(kT0: tokenType, kT1: tokenType, kT2: tokenType, args: any[], context: vscode.ExtensionContext): Promise<dictationMode | any[]> {
     const valid = validTokenCombination([args[0], kT0], [args[1], kT1], [args[2], kT2]);
     if (valid[1] === "") {
-        const result = await executeTwoTokens(kT0, kT1, args);
+        const result = await executeTwoTokens(kT0, kT1, args, context);
         if (result instanceof Array) {
             args = result;
             return args;
@@ -500,15 +600,22 @@ function nextHasPrecedence(args: (string | number)[]): number {
 ////////////////////////////////////////////////////////////////////////////
 export default async function GO(args: any[]): Promise<dictationMode> {
     try {
+        let context: vscode.ExtensionContext;
+        try{context = args[0]; args = args.slice(1);}
+        catch(e){
+            console.log(e);
+            console.log(`args[0] for GO should be context.`);
+            return dictationMode.invalid_arguments;
+        }
         while (args.length > 0) {
             console.log("start of while loop in GO");
             console.log(args);
             const kT0: tokenType = findTokenType(args[0]);
-            if (kT0 === tokenType.none || kT0 === tokenType.pyObj) {
+            if (kT0 === tokenType.none || kT0 === tokenType.suggestion || kT0 === tokenType.selection) {
                 return dictationMode.invalid_arguments;
             }
             if (args.length === 1) {
-                const result = await executeOneToken(kT0, args);
+                const result = await executeOneToken(kT0, args, context);
                 if (result instanceof Array) {
                     args = result;
                     continue;
@@ -518,7 +625,7 @@ export default async function GO(args: any[]): Promise<dictationMode> {
             }
             const kT1: tokenType = findTokenType(args[1]);
             if (args.length === 2) {
-                const result = await executeTwoTokens(kT0, kT1, args);
+                const result = await executeTwoTokens(kT0, kT1, args, context);
                 if (result instanceof Array) {
                     args = result;
                     continue;
@@ -528,7 +635,7 @@ export default async function GO(args: any[]): Promise<dictationMode> {
             }
             const kT2: tokenType = findTokenType(args[2]);
             if (args.length === 3) {
-                const result = await executeThreeTokens(kT0, kT1, kT2, args);
+                const result = await executeThreeTokens(kT0, kT1, kT2, args, context);
                 if (result instanceof Array) {
                     args = result;
                     continue;
@@ -542,7 +649,7 @@ export default async function GO(args: any[]): Promise<dictationMode> {
             //TODO: implement nextHasPrecedence
             const precedenceIdx: number = nextHasPrecedence(args);
             if (precedenceIdx === 1) {
-                const result = await executeOneToken(kT0, args);
+                const result = await executeOneToken(kT0, args, context);
                 if (result instanceof Array) {
                     args = result;
                     continue;
@@ -551,7 +658,7 @@ export default async function GO(args: any[]): Promise<dictationMode> {
                 }
             }
             else if (precedenceIdx === 2) {
-                const result = await executeTwoTokens(kT0, kT1, args);
+                const result = await executeTwoTokens(kT0, kT1, args, context);
                 if (result instanceof Array) {
                     args = result;
                     continue;
@@ -560,7 +667,7 @@ export default async function GO(args: any[]): Promise<dictationMode> {
                 }
             }
             else {
-                const result = await executeThreeTokens(kT0, kT1, kT2, args);
+                const result = await executeThreeTokens(kT0, kT1, kT2, args, context);
                 if (result instanceof Array) {
                     args = result;
                     continue;

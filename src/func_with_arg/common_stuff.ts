@@ -73,7 +73,7 @@ export const pythonOjects = [
 /**
  * Array of VSCode objects.
  */
-export const vscodeObjects = ["LINE", "FILE", "VIEW_PORT", "BLANK_LINE", "TAB", "DEFINITION", "PAGE"];
+export const vscodeObjects = ["LINE", "FILE", "VIEW_PORT", "BLANK_LINE", "TAB", "DEFINITION", "PAGE", "CHARACTER", "WORD"];
 
 export const selection = ["ALL", "MORE", "LESS", "FROM", "TO", "TO_START", "TO_END"];
 
@@ -103,7 +103,7 @@ export function findTokenType(arg: any): tokenType {
 
 
 
-export async function callFindParameterLocationInPython(context: vscode.ExtensionContext, targetLine: number, targetColumn: number): Promise<[number,number]|false> {
+export async function callFindParameterLocationInPython(context: vscode.ExtensionContext, targetLine: number, targetColumn: number): Promise<[number,number,boolean]|false> {
     const editor = vscode.window.activeTextEditor;
     if (!editor) {
         vscode.window.showErrorMessage('No active editor');
@@ -119,6 +119,7 @@ export async function callFindParameterLocationInPython(context: vscode.Extensio
     const content = editor.document.getText();
 
     let options: Options = {
+        mode: 'text',
         args: [targetLine.toString(), targetColumn.toString()]
     };
 
@@ -127,17 +128,26 @@ export async function callFindParameterLocationInPython(context: vscode.Extensio
         const url = context.asAbsolutePath('src/func_with_arg/find_parameter_location.py');
         let pyShell = new PythonShell(url, options);
 
+        // Send the content of the active editor to the Python script
+        pyShell.send(content);
+
         pyShell.on('message', function (message) {
-            // Attempt to parse the message assuming it's in the format "Add parameter after 'some_parameter', line: 4, column: 29."
+            // Attempt to parse the message assuming it's in the format "line: 4, column: 29."
             const locationMatch = message.match(/line: (\d+), column: (\d+)/);
             if (locationMatch) {
-                // If the message matches the expected format, resolve with the location [line, column]
-                resolve([locationMatch[1], locationMatch[2]]);
+                // If the message matches the expected format, resolve with the location [line, column, after]
+                // check if there are other parameters by checking first part of message if it is "no." or "after."
+                const firstPart = message.split('.')[0];
+                const after = firstPart === "after";
+                const line = parseInt(locationMatch[1]);
+                const col = parseInt(locationMatch[2]);
+                resolve([line, col, after]);
             } else if (message.trim() === '') {
                 // If the message is empty, indicate no location was found
                 console.log('No parameter location found.');
                 resolve(false);
             } else {
+                console.log(message);
                 // If the message does not match the expected format, treat it as an error
                 reject(new Error(`Failed to find parameter location: ${message}`));
             }
@@ -153,7 +163,6 @@ export async function callFindParameterLocationInPython(context: vscode.Extensio
             }
         });
 
-        // Send the content of the active editor to the Python script
-        pyShell.send(content);
+        
     });
 }

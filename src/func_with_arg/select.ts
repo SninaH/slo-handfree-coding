@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { dictationMode } from '../functions';
 import { tokenType, findTokenType } from './common_stuff';
+import GO from './go';
 
 /**
  * Selects the specified line number. By default selects from the first non-whitespace character to the end of the line.
@@ -81,7 +82,7 @@ const selectTokenVSobjectToFunction: { [key: string]: () => Promise<void> } = {
     "ALL|LINE": async () => {
         const editor = vscode.window.activeTextEditor;
         if (editor) {
-           await selectLine(editor.selection.active.line, true);
+            await selectLine(editor.selection.active.line, true);
         }
     },
     "TO_START|LINE": async () => {
@@ -149,14 +150,94 @@ async function executeTwoTokens(kT0: tokenType, kT1: tokenType, args: any[]): Pr
 export default async function SELECT(args: any[]): Promise<dictationMode> {
     console.log("Select");
     console.log(args);
+    let context: vscode.ExtensionContext;
+    try { context = args[0]; args = args.slice(1); }
+    catch (e) {
+        console.log(e);
+        console.log(`args[0] for GO should be context.`);
+        return dictationMode.invalid_arguments;
+    }
+
+    if (args.length === 0) {
+        console.log("zero arguments");
+        await vscode.commands.executeCommand('editor.action.smartSelect.grow');
+        console.log("selection growed");
+        return dictationMode.other;
+    }
+    
 
     while (args.length > 0) {
-        if (args.length === 0) {
-            console.log("zero arguments");
-            await vscode.commands.executeCommand('editor.action.smartSelect.grow');
-            console.log("selection growed");
+
+        if (args[0] === "FROM") {
+            // get current selection
+            const editor = vscode.window.activeTextEditor;
+            if (!editor) {
+                return dictationMode.no_active_editor;
+            }
+            const selection = editor.selection;
+            args = args.slice(1);
+            // get all arguments until "TO" for GO command
+            let start = 0;
+            let end = 0;
+            let i = 0;
+            while (i < args.length) {
+                if (args[i] === "TO") {
+                    end = i;
+                    break;
+                }
+                i++;
+            }
+            //check if there was a TO, otherwise all arguments are for GO
+            const isTO = end !== 0;
+            if (end === 0) {
+                end = args.length;
+            }
+            const goArgs = args.slice(0, end);
+            console.log(goArgs);
+            const result = await GO([context, ...goArgs]);
+            if (result !== dictationMode.other) {
+                return result;
+            }
+            const start_pos = editor.selection.active;
+            let end_pos = selection.end;
+            if(isTO){
+                args = args.slice(end + 1);
+                const goArgs = args;
+                console.log(goArgs);
+                const result = await GO([context, ...goArgs]);
+                if (result !== dictationMode.other) {
+                    return result;
+                }
+                end_pos = editor.selection.active;
+            } 
+            const newSelection = new vscode.Selection(start_pos, end_pos);
+            editor.selection = newSelection;
+            editor.revealRange(newSelection, vscode.TextEditorRevealType.InCenter);
             return dictationMode.other;
         }
+        if (args[0] === "TO") {
+            // get current selection
+            const editor = vscode.window.activeTextEditor;
+            if (!editor) {
+                return dictationMode.no_active_editor;
+            }
+            const selection = editor.selection;
+            args = args.slice(1);
+            const start_pos = selection.start;
+            // all arguments are for GO command
+            const goArgs = args;
+            console.log(goArgs);
+            const result = await GO([context, ...goArgs]);
+            if (result !== dictationMode.other) {
+                return result;
+            }
+            const end_pos = editor.selection.active;
+            const newSelection = new vscode.Selection(start_pos, end_pos);
+            editor.selection = newSelection;
+            editor.revealRange(newSelection, vscode.TextEditorRevealType.InCenter);
+            return dictationMode.other;
+        }
+
         const kT0 = findTokenType(args[0]);
         if (args.length === 1) {
             console.log("one argument");

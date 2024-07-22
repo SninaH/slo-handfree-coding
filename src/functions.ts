@@ -5,13 +5,14 @@ import SELECT from './func_with_arg/select';
 import DELETE from './func_with_arg/delete';
 import NEW from './func_with_arg/new';
 import SUGGESTION from './func_with_arg/suggestion';
-import { CAMEL_CASE, SNAKE_CASE } from './func_with_arg/case';
+import { CAMEL_CASE, SNAKE_CASE, CAPS_LOCK } from './func_with_arg/case';
 
 
 export const enum dictationMode {
     dictate,
     dictate_without_special_characters,
     spell,
+    spell_uppercase,
     stop,
     other,
     no_command_found,
@@ -137,13 +138,16 @@ export const functions = {
      * @example spelling("testo indija most energija") // time
      */
     spelling: async (args: any[]): Promise<dictationMode> => {
-        if (args.length !== 1 || typeof args[0] !== 'string') {
+        if (args.length !== 2 || typeof args[0] !== 'boolean' || typeof args[1] !== 'string') {
             console.error('Invalid arguments for spelling. Expected 1 argument of type string.');
             return dictationMode.invalid_arguments;
         }
-        const text: string = args[0];
+        const text: string = args[1];
         const matches = text.match(/\b\w/g);
-        const formattedText = matches ? matches.join('') : '';
+        let formattedText = matches ? matches.join('') : '';
+        if(args[0]){
+            formattedText = formattedText.toUpperCase();
+        }
         const success = await functions.insert_plain_text([formattedText]);
         return (success === dictationMode.dictate_without_special_characters) ? dictationMode.spell : success;
     },
@@ -169,6 +173,14 @@ export const functions = {
             return dictationMode.invalid_arguments;
         } else {
             return dictationMode.spell;
+        }
+    },
+    SPELL_UPPERCASE: (args: any[]): dictationMode => {
+        if (args.length !== 0) {
+            console.error('Invalid arguments for SPELL_UPPERCASE. Expected 0 arguments');
+            return dictationMode.invalid_arguments;
+        } else {
+            return dictationMode.spell_uppercase;
         }
     },
 
@@ -529,6 +541,7 @@ export const functions = {
     DELETE: DELETE, //imported at the top of document
     SNAKE_CASE: SNAKE_CASE, //imported at the top of document
     CAMEL_CASE: CAMEL_CASE, //imported at the top of document
+    CAPS_LOCK: CAPS_LOCK, //imported at the top of document
     NEW: NEW, //imported at the top of document
     SUGGESTION: SUGGESTION, //imported at the top of document
 
