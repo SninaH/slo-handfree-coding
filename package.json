@@ -37,11 +37,31 @@
     "configuration": {
       "title": "Slo Handsfree Coding",
       "properties": {
-        "slo-handsfree-coding.transcriberLink": {
+        "slo-handsfree-coding.transcriberLinkTranscribe": {
           "type": "string",
           "scope": "application",
-          "default": "http://localhost:8000",
-          "description": "Link to the transcriber server you have set up with docker from https://github.com/clarinsi/Slovene_ASR_e2e/ or https://github.com/clarinsi/Slovene_ASR_e2e/pull/5 (default: http://localhost:8000/)\nDO NOT PUT / AT THE END OF THE LINK"
+          "default": "http://localhost:8000/api/transcribe",
+          "description": "Link to the transcriber server you have set up with docker from https://github.com/clarinsi/Slovene_ASR_e2e/ or https://github.com/clarinsi/Slovene_ASR_e2e/pull/5 for transcription (default: http://localhost:8000/api/transcribe)"
+        },
+        "slo-handsfree-coding.transcriberLinkHealthCheck": {
+          "type": "string",
+          "scope": "application",
+          "default": "http://localhost:8000/api/healthCheck",
+          "description": "Link to the transcriber server you have set up with docker from https://github.com/clarinsi/Slovene_ASR_e2e/ or https://github.com/clarinsi/Slovene_ASR_e2e/pull/5 for health check (default: http://localhost:8000/api/healthCheck)"
+        },
+        "slo-handsfree-coding.recorder": {
+          "type": "string",
+          "scope": "application",
+          "enum": [
+            "serenade speech-recorder",
+            "python speech recognition"
+          ],
+          "enumDescriptions": [
+            "Speech-recorder: node.js addon used by serenade to record speech",
+            "Python speech recognition: python library for speech-recognition that has to be separately installed with pip together with PyAudio. (https://pypi.org/project/SpeechRecognition/)"
+          ],
+          "default": "serenade speech-recorder",
+          "description": "Choose the recorder you want to use for recording audio (default: speech-recorder)"
         },
         "slo-handsfree-coding.transcriberTimeout": {
           "type": "number",
@@ -68,10 +88,8 @@
             "nehaj": "STOP",
             "nehaj poslušati": "STOP",
             "nehaj poslušat": "STOP",
-
             "izvedi": "EXECUTE_TEXT_IN_EDITOR",
             "izvedi označeno": "EXECUTE_SELECTED_TEXT_IN_EDITOR",
-            
             "nastavitve": "SETTINGS",
             "shrani": "SAVE_FILE",
             "shrani kot": "SAVE_FILE_AS",
@@ -90,7 +108,6 @@
             "formatiraj": "FORMAT",
             "polepšaj": "FORMAT",
             "zamakni": "SHIFT",
-            
             "prekinitvena točka": "DEBUGGER_BREAKPOINT",
             "prekinitvena točka na mestu": "DEBUGGER_INLINE_BREAKPOINT",
             "začni razhroščevanje": "DEBUGGER_START",
@@ -143,14 +160,11 @@
           "scope": "application",
           "description": "Tu lahko spremenite imena python objektov, ki jih lahko narekujete. Spreminjajte le vrednosti na levi strani. Če želite odstraniti par, spremenite levo stran na znak, ki ni v abecedi npr. _",
           "default": {
-            
             "from": "FROM",
             "iz": "FROM",
             "import": "IMPORT",
             "importiraj": "IMPORT",
-            
             "konstanta": "CONSTANT",
-
             "razred": "CLASS",
             "objekt": "OBJECT",
             "metoda": "METHOD",
@@ -158,18 +172,15 @@
             "vrni": "RETURN",
             "parameter": "PARAMETER",
             "argument": "ARGUMENT",
-            
             "seznam": "LIST",
             "tabela": "TUPLE",
             "slovar": "DICTIONARY",
-            "množica": "SET",	
+            "množica": "SET",
             "ključ": "KEY",
-            "vrednost": "VALUE",	
-            
+            "vrednost": "VALUE",
             "če": "IF",
             "ali če": "ELIF",
             "sicer": "ELSE",
-            
             "dokler": "WHILE",
             "za vsak": "FOR_EACH",
             "zanka": "FOR",
@@ -177,18 +188,14 @@
             "v": "IN",
             "obseg": "RANGE",
             "obsegu": "RANGE",
-            
             "izpiši": "PRINT",
             "printaj": "PRINT",
             "vnos": "INPUT",
             "odpri": "OPEN",
             "poskus": "TRY",
             "izjema": "EXCEPT",
-            
             "spremenljivka": "VARIABLE",
-
             "tip": "TYPE",
-
             "število": "INTEGER",
             "dolgo število": "LONG",
             "decimalno število": "FLOAT",
@@ -196,7 +203,6 @@
             "niz": "STRING",
             "logična vrednost": "BOOLEAN",
             "noben": "NONE"
-            
           },
           "additionalProperties": {
             "type": "string"
@@ -299,7 +305,7 @@
             "type": "string"
           }
         },
-        "slo-handsfree-coding.suggestionName":{
+        "slo-handsfree-coding.suggestionName": {
           "type": "object",
           "scope": "application",
           "description": "Tu lahko spremenite imena ukazov za predlog (SUGGESTION), ki jih lahko narekujete. Spreminjajte le vrednosti na levi strani. Če želite odstraniti par, spremenite levo stran na znak, ki ni v abecedi npr. _",
@@ -311,7 +317,6 @@
             "type": "string"
           }
         },
-
         "slo-handsfree-coding.specialCharactersName": {
           "type": "object",
           "scope": "application",
@@ -404,9 +409,9 @@
           }
         },
         "slo-handsfree-coding.vscodeCommandsName": {
-          "type":"object",
-          "scope":"application",
-          "description":"Tu lahko dodate vscode ukaze, ki se jih da izvesti z vscode.commands.executeCommand. Na levi strani napišite ime, ki ga boste uporabili za narekovanje, na desni pa ime ukaza, ki ga želite izvesti.",
+          "type": "object",
+          "scope": "application",
+          "description": "Tu lahko dodate vscode ukaze, ki se jih da izvesti z vscode.commands.executeCommand. Na levi strani napišite ime, ki ga boste uporabili za narekovanje, na desni pa ime ukaza, ki ga želite izvesti.",
           "default": {
             "išči": "editor.action.startFindReplaceAction",
             "skrij išči": "closeFindWidget"
@@ -424,14 +429,18 @@
     "watch": "tsc -watch -p ./",
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src --ext ts",
-    "test": "vscode-test"
+    "test": "vscode-test",
+    "rebuild": "electron-rebuild -f -w speech-recorder --version 3.6.0"
   },
   "dependencies": {
-    "python-shell": "^5.0.0"
+    "python-shell": "^5.0.0",
+    "speech-recorder": "^2.1.0",
+    "wavefile": "^11.0.0"
   },
   "devDependencies": {
+    "@electron/rebuild": "^3.6.0",
     "@types/mocha": "^10.0.6",
-    "@types/node": "18.x",
+    "@types/node": "^18.19.41",
     "@types/vscode": "^1.89.0",
     "@typescript-eslint/eslint-plugin": "^7.7.1",
     "@typescript-eslint/parser": "^7.7.1",

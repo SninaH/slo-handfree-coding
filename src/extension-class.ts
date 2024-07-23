@@ -2,6 +2,8 @@ import * as vscode from 'vscode';
 import { PythonShell, Options } from 'python-shell';
 import CommandHandler from "./find-command-offline";
 import { dictationMode } from './functions';
+// Import from the razpoznavalnik.js file
+import { startRecording, stopRecording } from './razpoznavalnik.js';
 
 
 
@@ -17,7 +19,8 @@ export default class Extension {
     private context: vscode.ExtensionContext;
     private pressedStopButton: boolean = false;
     startListeningOnClick: vscode.Disposable;
-    transcriberLink: string;
+    transcriberLinkTranscribe: string;
+    transcriberLinkHealthCheck: string;
 
     constructor(context: vscode.ExtensionContext) {
         this.context = context;
@@ -29,7 +32,8 @@ export default class Extension {
         this.pythonRazpoznavalnikURL = vscode.Uri.joinPath(context.extensionUri, "src", "razpoznavalnik.py").fsPath;
 
         //get the path to the transcriber from settings
-        this.transcriberLink = vscode.workspace.getConfiguration('slo-handsfree-coding').get('transcriberLink') as string;
+        this.transcriberLinkTranscribe = vscode.workspace.getConfiguration('slo-handsfree-coding').get('transcriberLinkTranscribe') as string;
+        this.transcriberLinkHealthCheck = vscode.workspace.getConfiguration('slo-handsfree-coding').get('transcriberLinkHealthCheck') as string;
 
         //create status bar item for listening
         let StatusBarOnClickCommandName: string = 'slo-handsfree-coding.listen';
@@ -131,6 +135,54 @@ export default class Extension {
         this.myStatusBarItem.show();
     }
 
+    private async pythonTranscribing(): Promise<string> {
+        let options: Options = {
+            args: [this.transcriberLinkTranscribe, this.transcriberLinkHealthCheck]
+        };
+        console.log('PythonShell started for recording and transcription');
+        const timeout = (ms: number) => new Promise(resolve => setTimeout(resolve, ms, 'Timeout'));
+        const milliseconds: number = this.transcriberTimeout * 1000;
+        const messages = await Promise.race([
+            PythonShell.run(this.pythonRazpoznavalnikURL, options),
+            timeout(milliseconds)
+        ]) as string[] | "Timeout";
+
+        if (messages === 'Timeout') {
+            console.error(`Operation timed out after ${this.transcriberTimeout} seconds`);
+            // Handle timeout case here
+            this.updateStatusBarNotListening();
+            throw new Error('Transcription timed out');
+        } else {
+            //označi, da ne posluša več
+            console.log('Listening stopped');
+            this.updateStatusBarNotListening();
+            console.log(messages);
+
+
+            if (messages && messages.length > 0) {
+                let lastMessage = messages[messages.length - 1];
+                let transcription: string;
+                //TODO: preveri vse tipe Response, ne le 200
+                if (lastMessage === '[ERROR] Unable to connect to server') {
+                    vscode.window.showErrorMessage('Napaka pri povezavi s strežnikom. Preverite ali deluje razpoznavalnik (docker) in ali ste napisali pravo povezavo v nastavitvah.');
+                    throw new Error('server connection error: transcriber not running or wrong link in settings');
+                } else {
+                    (lastMessage === '<Response [200]>') ? transcription = '' : transcription = lastMessage;
+                    return transcription;
+                }
+            } else {
+                throw new Error('No messages received from PythonShell');
+            }
+        }
+    }
+
+    private async serenadeTranscribing(): Promise<string> {
+        const transcription = await startRecording(this.transcriberLinkTranscribe, this.transcriberLinkHealthCheck);
+        console.log('Transcription:', transcription);
+        stopRecording();
+        return transcription;
+    }
+
     async startListening(): Promise<string> {
         console.log('Listening started');
         if (this.crkuj) {
@@ -145,45 +197,15 @@ export default class Extension {
         this.myStatusBarItem.show();
 
         try {
-            let options: Options = {
-                args: [this.transcriberLink]
-            };
-            console.log('PythonShell started for recording and transcription');
-            const timeout = (ms: number) => new Promise(resolve => setTimeout(resolve, ms, 'Timeout'));
-            const milliseconds: number = this.transcriberTimeout * 1000;
-            const messages = await Promise.race([
-                PythonShell.run(this.pythonRazpoznavalnikURL, options),
-                timeout(milliseconds)
-            ]) as string[] | "Timeout";
-
-            if (messages === 'Timeout') {
-                console.error(`Operation timed out after ${this.transcriberTimeout} seconds`);
-                // Handle timeout case here
-                this.updateStatusBarNotListening();
-                throw new Error('Transcription timed out');
-            } else {
-                //označi, da ne posluša več
-                console.log('Listening stopped');
-                this.updateStatusBarNotListening();
-                console.log(messages);
-
-
-                if (messages && messages.length > 0) {
-                    let lastMessage = messages[messages.length - 1];
-                    let transcription: string;
-                    //TODO: preveri vse tipe Response, ne le 200
-                    if (lastMessage === '[ERROR] Unable to connect to server') {
-                        vscode.window.showErrorMessage('Napaka pri povezavi s strežnikom. Preverite ali deluje razpoznavalnik (docker) in ali ste napisali pravo povezavo v nastavitvah.');
-                        throw new Error('server connection error: transcriber not running or wrong link in settings');
-                    } else {
-                        (lastMessage === '<Response [200]>') ? transcription = '' : transcription = lastMessage;
-                        return transcription;
-                    }
-                } else {
-                    throw new Error('No messages received from PythonShell');
-                }
+            // check from settings slo-handsfree-coding.recorder which recorder is being used
+            // if serenade is selected, use serenadeTranscribing
+            // if python is selected, use pythonTranscribing
+            const recorder: string|undefined = vscode.workspace.getConfiguration('slo-handsfree-coding').get('recorder');
+            if(recorder === undefined) {
+                throw new Error('Recorder not selected');
             }
-
+            const transcription: string = (recorder === 'serenade') ? await this.serenadeTranscribing() : await this.pythonTranscribing();
+            return transcription;
 
         } catch (error) {
             this.updateStatusBarNotListening();

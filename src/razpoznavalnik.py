@@ -6,11 +6,12 @@ from requests.exceptions import ConnectionError
 print("start python script")
 
 if len(sys.argv) > 1:
-    link = sys.argv[1]
+    transcribe_link = sys.argv[1]
+    health_check_link = sys.argv[2]
 else:
     link = "http://localhost:8000"
-transcribe_link = link + "/api/transcribe"
-health_check_link = link + "/api/healthCheck"
+    transcribe_link = link + "/api/transcribe"
+    health_check_link = link + "/api/healthCheck"
 
 try:
     result = requests.get(health_check_link)

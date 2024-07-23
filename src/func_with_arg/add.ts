@@ -15,13 +15,18 @@ async function add_string(text: string, cursorMove?: [number, number]): Promise<
 
         // Check if the selection is empty and the character before the cursor is not a space
         if (selection.isEmpty) {
-            const positionBeforeCursor = selection.active.translate(0, -1);
-            const rangeBeforeCursor = new vscode.Range(positionBeforeCursor, selection.active);
-            const textBeforeCursor = editor.document.getText(rangeBeforeCursor);
-            
-            // Use a regular expression to check for any kind of whitespace character
-            if (!/\s/.test(textBeforeCursor)) {
-                text = " " + text;
+            // Check if the cursor is not at the beginning of the line
+            if (selection.active.character > 0) {
+                // Ensure that the character position does not become negative
+                const characterOffset = selection.active.character > 0 ? -1 : 0;
+                const positionBeforeCursor = selection.active.translate(0, characterOffset);
+                const rangeBeforeCursor = new vscode.Range(positionBeforeCursor, selection.active);
+                const textBeforeCursor = editor.document.getText(rangeBeforeCursor);
+
+                // Use a regular expression to check for any kind of whitespace character
+                if (!/\s/.test(textBeforeCursor)) {
+                    text = " " + text;
+                }
             }
         }
 
