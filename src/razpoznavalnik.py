@@ -44,5 +44,3 @@ try:
 except ConnectionError:
     print("[ERROR] Unable to connect to server")
     
-
-    

@@ -73,7 +73,7 @@ export const pythonOjects = [
 /**
  * Array of VSCode objects.
  */
-export const vscodeObjects = ["LINE", "FILE", "VIEW_PORT", "BLANK_LINE", "TAB", "DEFINITION", "PAGE", "CHARACTER", "WORD"];
+export const vscodeObjects = ["LINE", "FILE", "VIEW_PORT", "BLANK_LINE", "TAB", "DEFINITION", "PAGE", "CHARACTER", "WORD", "INSIDE_BRACKETS"];
 
 export const selection = ["ALL", "MORE", "LESS", "FROM", "TO", "TO_START", "TO_END"];
 

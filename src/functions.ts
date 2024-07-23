@@ -4,6 +4,7 @@ import TERMINAL from './func_with_arg/terminal';
 import SELECT from './func_with_arg/select';
 import DELETE from './func_with_arg/delete';
 import NEW from './func_with_arg/new';
+import ADD from './func_with_arg/add';
 import SUGGESTION from './func_with_arg/suggestion';
 import { CAMEL_CASE, SNAKE_CASE, CAPS_LOCK } from './func_with_arg/case';
 
@@ -583,6 +584,7 @@ export const functions = {
     CAMEL_CASE: CAMEL_CASE, //imported at the top of document
     CAPS_LOCK: CAPS_LOCK, //imported at the top of document
     NEW: NEW, //imported at the top of document
+    ADD: ADD, //imported at the top of document
     SUGGESTION: SUGGESTION, //imported at the top of document
 
 };

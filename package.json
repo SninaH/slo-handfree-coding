@@ -213,6 +213,7 @@
             "dokumenta": "FILE",
             "vrstica": "LINE",
             "vrstico": "LINE",
+            "vrstice": "LINE",
             "vidno polje": "VIEW_PORT",
             "vidnega polja": "VIEW_PORT",
             "stran": "PAGE",
@@ -225,6 +226,9 @@
             "definicija": "DEFINITION",
             "definicijo": "DEFINITION",
             "definicije": "DEFINITION",
+            "noter": "INSIDE_BRACKETS",
+            "notri": "INSIDE_BRACKETS",
+            "oklepaj": "INSIDE_BRACKETS",
             "znak": "CHARACTER",
             "beseda": "WORD"
           },

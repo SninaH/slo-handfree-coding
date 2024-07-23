@@ -25,10 +25,66 @@ function moveToLineAndCol(lineNumber: number, colNumber: number, editor: vscode.
     editor.revealRange(new vscode.Range(position, position)); // Scrolls to the position
 }
 
+
+function moveToInsideClosestBrackets() {
+    const editor = vscode.window.activeTextEditor;
+    if (!editor) {
+        return; // No open text editor
+    }
+
+    const document = editor.document;
+    const currentPosition = editor.selection.active;
+    const currentLine = document.lineAt(currentPosition.line);
+    const currentLineText = currentLine.text;
+    const cursorPositionInLine = currentPosition.character;
+
+    // Define opening and closing brackets
+    const openingBrackets = ['(', '[', '{'];
+    const closingBrackets = [')', ']', '}'];
+
+    let closestBracketPosition: vscode.Position | null = null;
+    let closestBracketDistance = Infinity;
+    let isClosingBracket = false;
+
+    // Search for the closest bracket in both directions on the same line
+    [...openingBrackets, ...closingBrackets].forEach((bracket) => {
+        const beforeCursor = currentLineText.lastIndexOf(bracket, cursorPositionInLine - 1);
+        const afterCursor = currentLineText.indexOf(bracket, cursorPositionInLine);
+
+        // Calculate distance and update if closer bracket is found
+        if (beforeCursor !== -1) {
+            const distanceBefore = cursorPositionInLine - beforeCursor;
+            if (distanceBefore < closestBracketDistance) {
+                closestBracketDistance = distanceBefore;
+                closestBracketPosition = new vscode.Position(currentPosition.line, beforeCursor);
+                isClosingBracket = closingBrackets.includes(bracket);
+            }
+        }
+
+        if (afterCursor !== -1) {
+            const distanceAfter = afterCursor - cursorPositionInLine;
+            if (distanceAfter < closestBracketDistance) {
+                closestBracketDistance = distanceAfter;
+                closestBracketPosition = new vscode.Position(currentPosition.line, afterCursor);
+                isClosingBracket = closingBrackets.includes(bracket);
+            }
+        }
+    });
+
+    // Move the cursor inside the closest bracket found
+    if (closestBracketPosition !== null) {
+        const newPosition = isClosingBracket ? closestBracketPosition : (closestBracketPosition as vscode.Position).translate(0, 1);
+        editor.selection = new vscode.Selection(newPosition, newPosition);
+        editor.revealRange(new vscode.Range(newPosition, newPosition)); // Scroll to the cursor if needed
+    }
+}
+
 async function moveObj(obj: string): Promise<boolean> {
     if (obj === "DEFINITION") {
         await vscode.commands.executeCommand('editor.action.goToDeclaration');
         return true;
+    } else if (obj === "INSIDE_BRACKETS") {
+        moveToInsideClosestBrackets();
     }
     return false;
 }
@@ -592,7 +648,7 @@ async function executeThreeTokens(kT0: tokenType, kT1: tokenType, kT2: tokenType
  * 
  */
 function nextHasPrecedence(args: (string | number)[]): number {
-    const firstThree: [string | number, tokenType][] = [[args[0], findTokenType(args[0])], [args[1], findTokenType(args[1])], [args[2], findTokenType(args[2])]];
+    // const firstThree: [string | number, tokenType][] = [[args[0], findTokenType(args[0])], [args[1], findTokenType(args[1])], [args[2], findTokenType(args[2])]];
 
     return -1;
 }
