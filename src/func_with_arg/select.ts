@@ -107,7 +107,7 @@ async function executeOneToken(kT: tokenType, args: any[]): Promise<dictationMod
             args = args.slice(1);
             return args;
         } else {
-            console.log(`Invalid argument: ${args[0]}`)
+            console.log(`Invalid argument: ${args[0]}`);
             return dictationMode.invalid_arguments;
         }
     } else if (kT === tokenType.vsObj) {
@@ -116,7 +116,7 @@ async function executeOneToken(kT: tokenType, args: any[]): Promise<dictationMod
             args = args.slice(1);
             return args;
         } else {
-            console.log(`Invalid argument: ${args[0]}`)
+            console.log(`Invalid argument: ${args[0]}`);
             return dictationMode.invalid_arguments;
         }
     }

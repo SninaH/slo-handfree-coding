@@ -130,7 +130,9 @@
             "terminal": "TERMINAL",
             "predlog": "SUGGESTION",
             "predlagaj": "SUGGESTION",
-            "dodaj ukaz": "ADD_SELECTED_TEXT_AS_TERMINAL_ACTION"
+            "dodaj ukaz za terminal": "ADD_SELECTED_TEXT_AS_TERMINAL_ACTION",
+            "dodaj ukaz": "ADD_SELECTED_TEXT_AS_VSCODE_COMMAND",
+            "ukaz": "COMMAND"
           },
           "additionalProperties": {
             "type": "string"
@@ -288,6 +290,9 @@
             "pojdi gor": "SCROLL_UP",
             "pojdi dol": "SCROLL_DOWN",
             "označi vse": "SELECT_ALL"
+          },
+          "additionalProperties": {
+            "type": "string"
           }
         },
         "slo-handsfree-coding.suggestionName":{
@@ -385,12 +390,22 @@
           "scope": "application",
           "description": "Tu lahko spremenite imena operacij, ki jih želite izvesti z ukazom EXECUTE (default: 'izvedi'). Za dodati novo operacijo, napišite na desni strani ime, na levi pa kar želite izpisati v terminal. Znak za novo vrstico ni potreben.",
           "default": {
-            "poženi": "run",
-            "poženi test": "run test",
             "seznam datotek": "ls",
             "pridobi": "git fetch",
             "povleci": "git pull",
             "pošlji": "git push"
+          },
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "slo-handsfree-coding.vscodeCommandsName": {
+          "type":"object",
+          "scope":"application",
+          "description":"Tu lahko dodate vscode ukaze, ki se jih da izvesti z vscode.commands.executeCommand. Na levi strani napišite ime, ki ga boste uporabili za narekovanje, na desni pa ime ukaza, ki ga želite izvesti.",
+          "default": {
+            "išči": "editor.action.startFindReplaceAction",
+            "skrij išči": "closeFindWidget"
           },
           "additionalProperties": {
             "type": "string"

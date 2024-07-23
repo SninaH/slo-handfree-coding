@@ -66,7 +66,9 @@ async function getNameAndArgs(context: vscode.ExtensionContext, transcription: s
     const suggestion = await vscode.workspace.getConfiguration('slo-handsfree-coding').get('suggestionName') as { [key: string]: string };
     const terminalActionsName = await vscode.workspace.getConfiguration('slo-handsfree-coding').get('terminalActionsName') as { [key: string]: string };
 
-    for (let key in commands) {
+    const keys = Object.keys(commands);
+    keys.sort((a, b) => b.length - a.length); //sort keys by length in descending order
+    for (let key of keys) {
         let idx_substring = transcription.indexOf(key);
         if (idx_substring !== -1) {
             //found command
@@ -103,6 +105,19 @@ async function getNameAndArgs(context: vscode.ExtensionContext, transcription: s
                     console.error("No terminal operation found");
                     return ["", []];
                 }
+            } else if (commandValue === "COMMAND") {
+                const commandName = await vscode.workspace.getConfiguration('slo-handsfree-coding').get('vscodeCommandsName') as { [key: string]: string };
+                const sortedKeys = Object.keys(commandName).sort((a, b) => b.length - a.length);
+                for (const key of sortedKeys) {
+                    if (argsString.includes(key)) {
+                        args = [commandName[key]];
+                        break;
+                    }
+                }
+                if (args.length === 0) {
+                    console.error("No command found");
+                    return ["", []];
+                }
             } else if (commandValue === "SELECT") {
                 argsString = changeKeyWithObjectValue(argsString, selection); //replace objects keys with their values/codes
                 argsString = changeKeyWithObjectValue(argsString, vsObjects); //replace objects keys with their values/codes
@@ -137,6 +152,8 @@ async function getNameAndArgs(context: vscode.ExtensionContext, transcription: s
                 args = splitText(argsString, false);
 
             } else if (commandValue === "ADD_SELECTED_TEXT_AS_TERMINAL_ACTION" || commandValue === "CAPS_LOCK") {
+                args = [argsString];
+            } else if (commandValue === "ADD_SELECTED_TEXT_AS_VSCODE_COMMAND") {
                 args = [argsString];
             } else {
                 argsString = changeKeyWithObjectValue(argsString, pyObjects);

@@ -145,7 +145,7 @@ export const functions = {
         const text: string = args[1];
         const matches = text.match(/\b\w/g);
         let formattedText = matches ? matches.join('') : '';
-        if(args[0]){
+        if (args[0]) {
             formattedText = formattedText.toUpperCase();
         }
         const success = await functions.insert_plain_text([formattedText]);
@@ -362,7 +362,7 @@ export const functions = {
         }
     },
 
-    
+
 
     ///////////////////////////
     // debug related functions
@@ -386,7 +386,7 @@ export const functions = {
             return dictationMode.other;
         }
     },
-    
+
     DEBUGGER_INLINE_BREAKPOINT: async (args: any[]): Promise<dictationMode> => {
         if (args.length !== 0) {
             console.error('Invalid arguments for DEBUGGER_INLINE_BREAKPOINT. Expected 0 arguments');
@@ -527,14 +527,54 @@ export const functions = {
         if (editor) {
             const text = editor.document.getText(editor.selection);
             //add selected text to settings terminalOperationName as value with key from args
-            const terminalOperations = vscode.workspace.getConfiguration('slo-handsfree-coding').get('terminalOperations') as { [key: string]: string };
-            terminalOperations[args[0]] = text;
+            const config = vscode.workspace.getConfiguration('slo-handsfree-coding');
+            const terminalOperations = config.get<{ [key: string]: string }>('terminalOperationName', {});
+            const updatedOperations = { ...terminalOperations };
+            updatedOperations[args[0]] = text;
+            console.log(`selected text ${text} added as terminal action with key ${args[0]}`);
+            await config.update('terminalOperationName', updatedOperations, vscode.ConfigurationTarget.Global);
+            console.log(config.get<{ [key: string]: string }>('terminalOperationName', {}));
             return dictationMode.other;
         } else {
             return dictationMode.no_active_editor;
         }
     },
-    
+
+    COMMAND: async (args: any[]): Promise<dictationMode> => {
+        if (args.length !== 1) {
+            console.error('Invalid arguments for COMMAND. Expected 1 argument');
+            return dictationMode.invalid_arguments;
+        }
+        //execute command from args
+        await vscode.commands.executeCommand(args[0]);
+        return dictationMode.other;
+    },
+
+    ADD_SELECTED_TEXT_AS_VSCODE_COMMAND: async (args: any[]): Promise<dictationMode> => {
+        if (args.length !== 1) {
+            console.error('Invalid arguments for ADD_SELECTED_TEXT_AS_VSCODE_COMMAND. Expected 1 argument');
+            return dictationMode.invalid_arguments;
+        }
+        //add selected text as vscode command
+        //get selected text from editor
+        const editor = vscode.window.activeTextEditor;
+        if (editor) {
+            const text = editor.document.getText(editor.selection);
+            //add selected text to settings vscodeCommands as value with key from args
+            const config = vscode.workspace.getConfiguration('slo-handsfree-coding');
+            const vscodeCommands = config.get<{ [key: string]: string }>('vscodeCommandsName', {});
+            const updatedCommands = { ...vscodeCommands };
+            updatedCommands[args[0]] = text;
+            console.log(`selected text ${text} added as vscode command with key ${args[0]}`);
+            await config.update('vscodeCommandsName', updatedCommands, vscode.ConfigurationTarget.Global);
+            console.log(config.get<{ [key: string]: string }>('vscodeCommandsName', {}));
+
+            return dictationMode.other;
+        } else {
+            return dictationMode.no_active_editor;
+        }
+    },
+
     GO: GO, //imported at the top of document
     TERMINAL: TERMINAL, //imported at the top of document
     SELECT: SELECT, //imported at the top of document
