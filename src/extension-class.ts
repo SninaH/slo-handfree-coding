@@ -179,10 +179,32 @@ export default class Extension {
     private async serenadeTranscribing(): Promise<string> {
         const transcription = await startRecording(this.transcriberLinkTranscribe, this.transcriberLinkHealthCheck);
         console.log('Transcription:', transcription);
-        stopRecording();
+        await stopRecording();
+        //označi, da ne posluša več
+        console.log('Listening stopped');
+        this.updateStatusBarNotListening();
         return transcription;
     }
 
+    private async getRecorderSetting(): Promise<string> {
+        const recorder = vscode.workspace.getConfiguration('slo-handsfree-coding').get<string>('speechRecorder');
+        if (!recorder) {
+            throw new Error('Recorder not selected');
+        }
+        return recorder;
+    }
+    
+    private async transcribeBasedOnRecorder(recorder: string): Promise<string> {
+        switch (recorder) {
+            case 'serenade':
+                return await this.serenadeTranscribing();
+            case 'python':
+                return await this.pythonTranscribing();
+            default:
+                throw new Error(`Unsupported recorder: ${recorder}`);
+        }
+    }
+    
     async startListening(): Promise<string> {
         console.log('Listening started');
         if (this.crkuj) {
@@ -200,12 +222,8 @@ export default class Extension {
             // check from settings slo-handsfree-coding.recorder which recorder is being used
             // if serenade is selected, use serenadeTranscribing
             // if python is selected, use pythonTranscribing
-            const recorder: string|undefined = vscode.workspace.getConfiguration('slo-handsfree-coding').get('recorder');
-            if(recorder === undefined) {
-                throw new Error('Recorder not selected');
-            }
-            const transcription: string = (recorder === 'serenade') ? await this.serenadeTranscribing() : await this.pythonTranscribing();
-            return transcription;
+            const recorder: string = await this.getRecorderSetting();
+            return await this.transcribeBasedOnRecorder(recorder);
 
         } catch (error) {
             this.updateStatusBarNotListening();

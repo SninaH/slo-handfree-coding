@@ -242,7 +242,12 @@ export default async function findCommandOffline(context: vscode.ExtensionContex
             return dictationMode.no_command_found;
         }
         // Execute the function based on the command
-        dicMode = await executeFunctionByName(fName, args);
+        try { 
+            dicMode = await executeFunctionByName(fName, args); 
+        } catch (e) {
+            console.log(e);
+            dicMode = dictationMode.execution_failed;
+        }
     }
     return dicMode;
 }

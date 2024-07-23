@@ -49,18 +49,18 @@
           "default": "http://localhost:8000/api/healthCheck",
           "description": "Link to the transcriber server you have set up with docker from https://github.com/clarinsi/Slovene_ASR_e2e/ or https://github.com/clarinsi/Slovene_ASR_e2e/pull/5 for health check (default: http://localhost:8000/api/healthCheck)"
         },
-        "slo-handsfree-coding.recorder": {
+        "slo-handsfree-coding.speechRecorder": {
           "type": "string",
           "scope": "application",
           "enum": [
-            "serenade speech-recorder",
-            "python speech recognition"
+            "serenade",
+            "python"
           ],
           "enumDescriptions": [
-            "Speech-recorder: node.js addon used by serenade to record speech",
+            "Serenade speech-recorder: node.js addon used by serenade to record speech",
             "Python speech recognition: python library for speech-recognition that has to be separately installed with pip together with PyAudio. (https://pypi.org/project/SpeechRecognition/)"
           ],
-          "default": "serenade speech-recorder",
+          "default": "serenade",
           "description": "Choose the recorder you want to use for recording audio (default: speech-recorder)"
         },
         "slo-handsfree-coding.transcriberTimeout": {

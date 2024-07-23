@@ -34,7 +34,7 @@ async function add_string(text: string, cursorMove?: [number, number]): Promise<
             editBuilder.replace(selection, text);
         });
         if (cursorMove) {
-            const newPosition = selection.active.translate(cursorMove[0], cursorMove[1]);
+            const newPosition = selection.active.translate(cursorMove[0], Math.max(cursorMove[1], 0));
             editor.selection = new vscode.Selection(newPosition, newPosition);
         }
     }
@@ -258,28 +258,31 @@ export default async function ADD(args: any[]): Promise<dictationMode> {
         return dictationMode.invalid_arguments;
     }
     while (args.length > 0) {
-        const kT0 = findTokenType(args[0]);
-        if (args.length === 1) {
+        try {
+            const kT0 = findTokenType(args[0]);
+            if (args.length === 1) {
 
-            const result = await executeOneToken(context, kT0, args);
+                const result = await executeOneToken(context, kT0, args);
+                if (result instanceof Array) {
+                    args = result;
+                    continue;
+                } else {
+                    return result;
+                }
+            }
+            const kT1 = findTokenType(args[1]);
+
+            const result = await executeTwoTokens(context, kT0, kT1, args);
             if (result instanceof Array) {
                 args = result;
                 continue;
             } else {
                 return result;
             }
+        } catch (e) {
+            console.log(e);
+            return dictationMode.execution_failed;
         }
-        const kT1 = findTokenType(args[1]);
-
-        const result = await executeTwoTokens(context, kT0, kT1, args);
-        if (result instanceof Array) {
-            args = result;
-            continue;
-        } else {
-            return result;
-        }
-
-
     }
     return dictationMode.other;
 }
