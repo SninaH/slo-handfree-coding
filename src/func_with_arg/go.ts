@@ -371,14 +371,10 @@ const ObjDirToFunctions: { [key: string]: () => Promise<void> } = {
         await vscode.commands.executeCommand('cursorWordEndRight');
     },
     "FILE|START": async () => {
-        await vscode.commands.executeCommand('cursorMove', {
-            to: 'viewPortTop',
-        });
+        await vscode.commands.executeCommand('cursorTop');
     },
     "FILE|END": async () => {
-        await vscode.commands.executeCommand('cursorMove', {
-            to: 'viewPortBottom',
-        });
+        await vscode.commands.executeCommand('cursorBottom');
     },
     "VIEW_PORT|START": async () => {
         await vscode.commands.executeCommand('cursorMove', {

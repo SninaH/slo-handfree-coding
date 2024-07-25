@@ -29,7 +29,6 @@ with sr.Microphone() as source:
     #     f.write(audio.get_wav_data())
 
 
-
 try:
     # audioFile = open('audio/speech.wav', 'rb')
     result = requests.post(transcribe_link, files={"audio_file":audio.get_wav_data()})
