@@ -13,7 +13,7 @@ function createWavFromBuffer(buffer, sampleRate) {
     return wav;
 }
 
-async function transcribe(wav, transcribeLink, healthCheckLink) {
+async function transcribe(wav, transcribeLink, healthCheckLink, outputChannel) {
 
     try {
         // Perform health check
@@ -39,19 +39,23 @@ async function transcribe(wav, transcribeLink, healthCheckLink) {
         const transcriptionResult = await transcriptionResponse.json();
         return transcriptionResult["result"];
     } catch (error) {
+        outputChannel.appendLine(`[slo-handsfree ERROR] "${error.message}". Is transcription server running?`);
+
         console.error(error.message);
-        vscode.window.showErrorMessage(error.message);
+        vscode.window.showErrorMessage(`Napaka pri povezavi s strežnikom. Preverite ali deluje razpoznavalnik (docker) in ali ste napisali pravo povezavo v nastavitvah.`);
         return null;
     }
 }
 
-function initializeRecorder(transcribeLink, healthCheckLink, callback) {
+function initializeRecorder(outputChannel, transcribeLink, healthCheckLink, callback) {
     transcriptionCallback = callback; // Assign the passed callback to the global variable
     recorder = new SpeechRecorder({
         sampleRate,
         consecutiveFramesForSilence: 10,
         onChunkStart: () => {
             console.log(Date.now(), "Chunk start");
+            outputChannel.appendLine("Chunk start");
+
             buffer = [];
         },
         onAudio: ({ audio, speech }) => {
@@ -61,9 +65,11 @@ function initializeRecorder(transcribeLink, healthCheckLink, callback) {
         },
         onChunkEnd: async () => {
             console.log(Date.now(), "Chunk end");
+            outputChannel.appendLine("Chunk end");
+
             if (buffer.length > 0) {
                 const wav = createWavFromBuffer(buffer, sampleRate);
-                const transcription = await transcribe(wav, transcribeLink, healthCheckLink);
+                const transcription = await transcribe(wav, transcribeLink, healthCheckLink, outputChannel);
                 console.log("Transcription:", transcription);
                 if (transcriptionCallback) {
                     transcriptionCallback(transcription); // Call the callback with the transcription result
@@ -74,25 +80,31 @@ function initializeRecorder(transcribeLink, healthCheckLink, callback) {
     });
 }
 
-async function startRecording(transcribeLink, healthCheckLink) {
-    return new Promise((resolve, reject) => {
-        // Check if the recorder is already initialized and not currently recording
-        if (!recorder || recorder.isRecording === false) {
-            initializeRecorder(transcribeLink, healthCheckLink, (transcription) => {
-                resolve(transcription); // Resolve the promise with the transcription result
-            });
-            console.log("Recording started...");
-            recorder.start();
-            recorder.isRecording = true; // Add a flag to indicate recording has started
-        } else {
-            reject("Recorder is already in use."); // Reject the promise if the recorder is already recording
-        }
-    });
+async function startRecording(transcribeLink, healthCheckLink, outputChannel) {
+    try {
+        return new Promise((resolve, reject) => {
+            // Check if the recorder is already initialized and not currently recording
+            if (!recorder || recorder.isRecording === false) {
+                initializeRecorder(outputChannel, transcribeLink, healthCheckLink, (transcription) => {
+                    resolve(transcription); // Resolve the promise with the transcription result
+                });
+                console.log("Recording started...");
+                outputChannel.appendLine("Recording started...");
+
+                recorder.start();
+                recorder.isRecording = true; // Add a flag to indicate recording has started
+            } else {
+                reject("Recorder is already in use."); // Reject the promise if the recorder is already recording
+            }
+        });
+    } catch (err) { reject(err); }
 }
 
-async function stopRecording() {
+async function stopRecording(outputChannel) {
     if (recorder) {
         console.log("Recording stopped.");
+        outputChannel.appendLine("Recording stopped.");
+
         await recorder.stop();
         recorder.isRecording = false; // Reset the recording flag
     }

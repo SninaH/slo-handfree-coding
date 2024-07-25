@@ -48,13 +48,17 @@ function splitText(inputText: string, splitAndConvertNumbers = true): (string | 
 }
 
 // Get the function name and its arguments 
-async function getNameAndArgs(context: vscode.ExtensionContext, transcription: string): Promise<[string, any[]]> {
+async function getNameAndArgs(context: vscode.ExtensionContext, transcription: string, outputChannel: vscode.OutputChannel): Promise<[string, any[]]> {
     //TODO add support for multiple commands in one transcription
 
     //get commands without parameters
     const commandsNoParameter: { [key: string]: string } = await vscode.workspace.getConfiguration('slo-handsfree-coding').get('commandsName') as { [key: string]: string };
     if (commandsNoParameter.hasOwnProperty(transcription)) {
         console.log(`found command without parameters ${commandsNoParameter[transcription]}`);
+        outputChannel.appendLine(`found command without parameters ${commandsNoParameter[transcription]}`);
+        if(commandsNoParameter[transcription] === "SHOW_OUTPUT_CHANNEL"){
+            return [commandsNoParameter[transcription], [outputChannel]];
+        }
         return [commandsNoParameter[transcription], []];
     }
     //get commands with parameters
@@ -166,6 +170,8 @@ async function getNameAndArgs(context: vscode.ExtensionContext, transcription: s
             }
 
             console.log(`found command ${commands[key]} and arguments ${args}`);
+            outputChannel.appendLine(`found command ${commands[key]} and arguments ${args}`);
+            
             return [commandValue, args];
         }
     }
@@ -188,7 +194,7 @@ function matchStringWithKeysOfValue(s: string, value: string, obj: { [key: strin
 }
 //process the transcription and execute the command
 //return name of command
-export default async function findCommandOffline(context: vscode.ExtensionContext, transcription: string, narekovanje: boolean, posebniZnaki: boolean, crkuj: boolean, caps: boolean): Promise<dictationMode> {
+export default async function findCommandOffline(context: vscode.ExtensionContext, outputChannel: vscode.OutputChannel, transcription: string, narekovanje: boolean, posebniZnaki: boolean, crkuj: boolean, caps: boolean): Promise<dictationMode> {
     let dicMode = dictationMode.other;
     if (transcription === "") {
         return dictationMode.no_command_found;
@@ -196,10 +202,14 @@ export default async function findCommandOffline(context: vscode.ExtensionContex
     if (crkuj) {
         const commands = vscode.workspace.getConfiguration('slo-handsfree-coding').get('commandsName') as { [key: string]: string };
         if (matchStringWithKeysOfValue(transcription, "STOP_DICTATING", commands)) {
-            console.log("stop spelling");
+            console.log("command STOP_DICTATING: stop spelling");
+            outputChannel.appendLine("Stop spelling");
+            
             return dictationMode.stop_dictating;
         } else if (matchStringWithKeysOfValue(transcription, "STOP", commands)) {
             console.log("stop");
+            outputChannel.appendLine("Stop");
+            
             return dictationMode.stop;
         }
         dicMode = dictationMode.spell;
@@ -209,9 +219,13 @@ export default async function findCommandOffline(context: vscode.ExtensionContex
         const commands = vscode.workspace.getConfiguration('slo-handsfree-coding').get('commandsName') as { [key: string]: string };
         if (matchStringWithKeysOfValue(transcription, "STOP_DICTATING", commands)) {
             console.log("stop dictating");
+            outputChannel.appendLine("Stop dictating");
+            
             return dictationMode.stop_dictating;
         } else if (matchStringWithKeysOfValue(transcription, "STOP", commands)) {
             console.log("stop");
+            outputChannel.appendLine("Stop");
+            
             return dictationMode.stop;
         }
         dicMode = dictationMode.dictate;
@@ -222,13 +236,19 @@ export default async function findCommandOffline(context: vscode.ExtensionContex
         const commands = vscode.workspace.getConfiguration('slo-handsfree-coding').get('commandsName') as { [key: string]: string };
         if (matchStringWithKeysOfValue(transcription, "STOP_DICTATING", commands)) {
             console.log("stop dictating");
+            outputChannel.appendLine("Stop dictating");
+            
             return dictationMode.stop_dictating;
         } else if (matchStringWithKeysOfValue(transcription, "STOP", commands)) {
             console.log("stop");
+            outputChannel.appendLine("Stop");
+            
             return dictationMode.stop;
         }
         dicMode = dictationMode.dictate_without_special_characters;
         console.log("currently in dictate mode without special characters");
+        outputChannel.appendLine("Dictate without special characters");
+        
 
         await executeFunctionByName('insert_plain_text', [transcription]);
 
@@ -236,9 +256,11 @@ export default async function findCommandOffline(context: vscode.ExtensionContex
     else {
         console.log("currently in command mode");
         // Get the function name and its arguments
-        const [fName, args] = await getNameAndArgs(context, transcription);
+        const [fName, args] = await getNameAndArgs(context, transcription, outputChannel);
         if (fName === "") {
             console.log("no command found");
+            outputChannel.appendLine("No command found");
+            
             return dictationMode.no_command_found;
         }
         // Execute the function based on the command
@@ -246,6 +268,8 @@ export default async function findCommandOffline(context: vscode.ExtensionContex
             dicMode = await executeFunctionByName(fName, args); 
         } catch (e) {
             console.log(e);
+            outputChannel.appendLine("Error: " + e);
+            
             dicMode = dictationMode.execution_failed;
         }
     }

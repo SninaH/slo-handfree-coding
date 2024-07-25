@@ -33,6 +33,16 @@ async function add_at_position(text: string, line: number, character: number) {
     }
 }
 
+async function addIndentedString(template: string) {
+    const insertSpaces: boolean = vscode.workspace.getConfiguration('editor').get('insertSpaces', true);
+    const tabSize: number = vscode.workspace.getConfiguration('editor').get('tabSize', 4);
+    const indentation = insertSpaces ? ' '.repeat(tabSize) : '\t';
+
+    // Replace hard-coded indentation with user's indentation setting
+    const indentedTemplate = template.replace(/^    /gm, indentation);
+    await add_new_string(indentedTemplate);
+}
+
 // Define a helper type for the functions
 type PyFunc = (() => Promise<void>) | ((context: vscode.ExtensionContext) => Promise<void>);
 
@@ -60,7 +70,7 @@ const pyObjectToFunction: { [key: string]: PyFunc } = {
 
     # Add more methods as needed
 `;
-        await add_new_string(pythonClassTemplate);
+        await addIndentedString(pythonClassTemplate);
 
     },
 
@@ -69,14 +79,16 @@ const pyObjectToFunction: { [key: string]: PyFunc } = {
     },
 
     "FUNCTION": async () => {
-        await add_new_string(`def my_function():
+        const functionTemplate = `def my_function():
     # Function definition
-    pass`);
+    pass`;
+        await addIndentedString(functionTemplate);
     },
     "METHOD": async () => {
-        await add_new_string(`def my_method(self):
+        const methodTemplate = `def my_method(self):
     # Method definition
-    pass`);
+    pass`;
+        await addIndentedString(methodTemplate);
     },
     "RETURN": async () => {
         await add_new_string(`return value`);
@@ -124,38 +136,38 @@ const pyObjectToFunction: { [key: string]: PyFunc } = {
         await add_new_string(`my_set = {value1, value2}`);
     },
     "IF": async () => {
-        await add_new_string(`if condition:
+        await addIndentedString(`if condition:
     # Code block
     pass`);
     },
     "ELIF": async () => {
-        await add_new_string(`elif condition:
+        await addIndentedString(`elif condition:
     # Code block
     pass`);
     },
     "ELSE": async () => {
-        await add_new_string(`else:
+        await addIndentedString(`else:
     # Code block
     pass`);
     },
 
     "WHILE": async () => {
-        await add_new_string(`while (condition):
+        await addIndentedString(`while (condition):
     # Code block
     pass`);
     },
     "FOR_EACH": async () => {
-        await add_new_string(`for key, value in my_dict.items():
+        await addIndentedString(`for key, value in my_dict.items():
     # Code block
     pass`);
     },
     "FOR": async () => {
-        await add_new_string(`for i in range(len(my_list)):
+        await addIndentedString(`for i in range(len(my_list)):
     # Code block
     pass`);
     },
     "RANGE": async () => {
-        await add_new_string(`for i in range(start, end)
+        await addIndentedString(`for i in range(start, end)
     # Code block
     pass`);
     },
@@ -167,12 +179,12 @@ const pyObjectToFunction: { [key: string]: PyFunc } = {
         await add_new_string(`user_input = input("Enter a value: ")`);
     },
     "OPEN": async () => {
-        await add_new_string(`with open('file_name', 'r') as file:
+        await addIndentedString(`with open('file_name', 'r') as file:
     # Code block
     pass`);
     },
     "TRY": async () => {
-        await add_new_string(`try:
+        await addIndentedString(`try:
     # Code block
     pass
 except Exception as e:
@@ -231,7 +243,7 @@ const pyObjWithNameToFunction: { [key: string]: PyFuncWithName } = {
 
     # Add more methods as needed
 `;
-        await add_new_string(pythonClassTemplate);
+        await addIndentedString(pythonClassTemplate);
     },
     "OBJECT": async (name: string) => {
         const snakeCaseName = name.split(' ').join('_').toLowerCase();
@@ -239,28 +251,28 @@ const pyObjWithNameToFunction: { [key: string]: PyFuncWithName } = {
     },
     "FUNCTION": async (name: string) => {
         const snakeCaseName = name.split(' ').join('_').toLowerCase();
-        await add_new_string(`def ${snakeCaseName}():
+        await addIndentedString(`def ${snakeCaseName}():
     # Function definition
     pass`);
     },
     "METHOD": async (name: string) => {
         const snakeCaseName = name.split(' ').join('_').toLowerCase();
-        await add_new_string(`def ${snakeCaseName}(self):
+        await addIndentedString(`def ${snakeCaseName}(self):
     # Method definition
     pass`);
     },
 
     "DICTIONARY": async (name: string) => {
         const snakeCaseName = name.split(' ').join('_').toLowerCase();
-        await add_new_string(`${snakeCaseName} = {}`);
+        await addIndentedString(`${snakeCaseName} = {}`);
     },
     "LIST": async (name: string) => {
         const snakeCaseName = name.split(' ').join('_').toLowerCase();
-        await add_new_string(`${snakeCaseName} = []`);
+        await addIndentedString(`${snakeCaseName} = []`);
     },
     "VARIABLE": async (name: string) => {
         const snakeCaseName = name.split(' ').join('_').toLowerCase();
-        await add_new_string(`${snakeCaseName} = None`);
+        await addIndentedString(`${snakeCaseName} = None`);
     },
     "PARAMETER": async (name: string, context: vscode.ExtensionContext) => {
         const currentLine = vscode.window.activeTextEditor?.selection.active.line;
@@ -290,14 +302,14 @@ const pyObjWithNameAndParamToFunction: { [key: string]: (name: string, param: st
     "FUNCTION": async (name: string, param: string) => {
         const snakeCaseName = name.split(' ').join('_').toLowerCase();
         const snakeCaseParam = param.split(' ').join('_').toLowerCase();
-        await add_new_string(`def ${snakeCaseName}(${snakeCaseParam}):
+        await addIndentedString(`def ${snakeCaseName}(${snakeCaseParam}):
     # Function definition
     pass`);
     },
     "METHOD": async (name: string, param: string) => {
         const snakeCaseName = name.split(' ').join('_').toLowerCase();
         const snakeCaseParam = param.split(' ').join('_').toLowerCase();
-        await add_new_string(`def ${snakeCaseName}(self, ${snakeCaseParam}):
+        await addIndentedString(`def ${snakeCaseName}(self, ${snakeCaseParam}):
     # Method definition
     pass`);
     },

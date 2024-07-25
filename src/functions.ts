@@ -351,6 +351,35 @@ export const functions = {
         }
         return dictationMode.other;
     },
+    SHIFT_LEFT: async (args: any[]): Promise<dictationMode> => {
+        if (args.length !== 0) {
+            console.error('Invalid arguments for SHIFT_LEFT. Expected 0 arguments');
+            return dictationMode.invalid_arguments;
+        }
+        const editor = vscode.window.activeTextEditor;
+        if (!editor) {
+            return dictationMode.no_active_editor;
+        }
+        if (!editor.selection.isEmpty) {
+            const document = editor.document;
+            const selection = editor.selection;
+            const selectedText = document.getText(selection);
+
+            // Determine tab replacement (tab character or spaces)
+            const useSpaces = editor.options.insertSpaces as boolean;
+            const tabSize = editor.options.tabSize as number;
+            const tabReplacement = useSpaces ? ' '.repeat(tabSize) : '\t';
+
+            // Remove tab or spaces from the beginning of each line of the selected text
+            const shiftedText = selectedText.split('\n').map(line => line.replace(new RegExp(`^${tabReplacement}`), '')).join('\n');
+
+            // Replace the selected text with the shifted text
+            await editor.edit(editBuilder => {
+                editBuilder.replace(selection, shiftedText);
+            });
+        }
+        return dictationMode.other;
+    },
 
 
     OPEN: async (args: any[]): Promise<dictationMode> => {
@@ -363,11 +392,30 @@ export const functions = {
         }
     },
 
+    SHOW_OUTPUT_CHANNEL: async (args: any[]): Promise<dictationMode> => {
+        if (args.length !== 1) {
+            console.error('Invalid arguments for SHOW_OUTPUT_CHANNEL. Expected 1 argument');
+            return dictationMode.invalid_arguments;
+        } else {
+            const outputChannel:vscode.OutputChannel = args[0];
+            outputChannel.show();
+            return dictationMode.other;
+        }
+    },
 
+    HIDE_OUTPUT_CHANNEL: async (args: any[]): Promise<dictationMode> => {
+        if (args.length !== 0) {
+            console.error('Invalid arguments for HIDE_OUTPUT_CHANNEL. Expected 0 arguments');
+            return dictationMode.invalid_arguments;
+        } else {
+            await vscode.commands.executeCommand('workbench.action.closePanel');
+            return dictationMode.other;
+        }
+    },
 
-    ///////////////////////////
+    ///////////////////////////////////////////////
     // debug related functions
-    ///////////////////////////
+    ///////////////////////////////////////////////
     DEBUGGER_BREAKPOINT: async (args: any[]): Promise<dictationMode> => {
         if (args.length !== 0) {
             console.error('Invalid arguments for BREAKPOINT. Expected 0 arguments');
