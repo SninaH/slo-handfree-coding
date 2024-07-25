@@ -4,6 +4,10 @@
   "description": "tool that lets you write code by dictating in Slovenian language",
   "version": "0.0.1",
   "publisher": "SninaH",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/SninaH/slo-handfree-coding.git"
+  },
   "engines": {
     "vscode": "^1.89.0"
   },

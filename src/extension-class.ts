@@ -4,7 +4,7 @@ import CommandHandler from "./find-command-offline";
 import { dictationMode } from './functions';
 // Import from the razpoznavalnik.js file
 import { startRecording, stopRecording } from './razpoznavalnik.js';
-
+import * as path from 'path';
 
 
 export default class Extension {
@@ -30,7 +30,8 @@ export default class Extension {
         this.transcriberTimeout = vscode.workspace.getConfiguration('slo-handsfree-coding').get('transcriberTimeout') as number;
 
         //set python file path for speech recognition
-        this.pythonRazpoznavalnikURL = vscode.Uri.joinPath(context.extensionUri, "src", "razpoznavalnik.py").fsPath;
+        // this.pythonRazpoznavalnikURL = vscode.Uri.joinPath(context.extensionUri, "src", "razpoznavalnik.py").fsPath;
+        this.pythonRazpoznavalnikURL = path.join(context.extensionPath, "pyscripts", "razpoznavalnik.py");
 
         //get the path to the transcriber from settings
         this.transcriberLinkTranscribe = vscode.workspace.getConfiguration('slo-handsfree-coding').get('transcriberLinkTranscribe') as string;

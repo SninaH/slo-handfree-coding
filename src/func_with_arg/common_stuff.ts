@@ -125,7 +125,7 @@ export async function callFindParameterLocationInPython(context: vscode.Extensio
 
     return new Promise((resolve, reject) => {
         // the path to the python script using extension's context
-        const url = context.asAbsolutePath('src/func_with_arg/find_parameter_location.py');
+        const url = context.asAbsolutePath('pyscripts/find_parameter_location.py');
         let pyShell = new PythonShell(url, options);
 
         // Send the content of the active editor to the Python script
