@@ -2,7 +2,7 @@
   "name": "slo-handsfree-coding",
   "displayName": "Slo Handsfree Coding",
   "description": "tool that lets you write code by dictating in Slovenian language",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "publisher": "SninaH",
   "repository": {
     "type": "git",

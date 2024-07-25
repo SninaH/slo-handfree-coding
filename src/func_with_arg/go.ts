@@ -85,6 +85,7 @@ async function moveObj(obj: string): Promise<boolean> {
         return true;
     } else if (obj === "INSIDE_BRACKETS") {
         moveToInsideClosestBrackets();
+        return true;
     }
     return false;
 }
