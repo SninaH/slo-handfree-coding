@@ -285,6 +285,7 @@
           "description": "Tu lahko spremenite imena ukazov za izbiro besedila. Spreminjajte le vrednosti na levi strani. Če želite odstraniti par, spremenite levo stran na znak, ki ni v abecedi npr. _",
           "default": {
             "vse": "ALL",
+            "celo": "ALL",
             "več": "MORE",
             "manj": "LESS",
             "od": "FROM",
