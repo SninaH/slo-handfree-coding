@@ -205,6 +205,7 @@
             "poskus": "TRY",
             "izjema": "EXCEPT",
             "spremenljivka": "VARIABLE",
+            "spremenljivko": "VARIABLE",
             "tip": "TYPE",
             "število": "INTEGER",
             "dolgo število": "LONG",
@@ -212,6 +213,7 @@
             "kompleksno število": "COMPLEX",
             "niz": "STRING",
             "logična vrednost": "BOOLEAN",
+            "logično vrednost": "BOOLEAN",
             "noben": "NONE"
           },
           "additionalProperties": {
