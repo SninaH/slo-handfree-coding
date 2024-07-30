@@ -194,6 +194,7 @@
             "za vsak": "FOR_EACH",
             "zanka": "FOR",
             "for": "FOR",
+            "za": "FOR",
             "v": "IN",
             "obseg": "RANGE",
             "obsegu": "RANGE",
