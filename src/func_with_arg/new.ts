@@ -173,7 +173,7 @@ const pyObjectToFunction: { [key: string]: PyFunc } = {
     },
 
     "PRINT": async () => {
-        await add_new_string(`print("Hello, World!")`);
+        await add_new_string(`print()`);
     },
     "INPUT": async () => {
         await add_new_string(`user_input = input("Enter a value: ")`);
@@ -188,6 +188,11 @@ const pyObjectToFunction: { [key: string]: PyFunc } = {
     # Code block
     pass
 except Exception as e:
+    # Code block
+    pass`);
+    },
+    "EXCEPT": async () => {
+        await addIndentedString(`except Exception as e:
     # Code block
     pass`);
     },
@@ -209,7 +214,7 @@ except Exception as e:
         await add_new_string(`my_complex = 0 + 0j`);
     },
     "STRING": async () => {
-        await add_new_string(`my_string = "Hello, World!"`);
+        await add_new_string(`my_string = ""`);
     },
     "BOOLEAN": async () => {
         await add_new_string(`my_boolean = True`);
@@ -284,10 +289,11 @@ const pyObjWithNameToFunction: { [key: string]: PyFuncWithName } = {
                     const line = result[0] - 1; // line is 0-indexed in vscode
                     const character = result[1];
                     console.log(`line: ${line}, character: ${character}`);
+                    const snakeCaseName = name.split(' ').join('_').toLowerCase();
                     if (result[2]) {
-                        await add_at_position(", " + name, line, character);
+                        await add_at_position(", " + snakeCaseName, line, character);
                     } else {
-                        await add_at_position(name, line, character);
+                        await add_at_position(snakeCaseName, line, character);
                     }
                 }
             } catch (e) {
