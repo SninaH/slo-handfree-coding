@@ -171,7 +171,7 @@
           "default": {
             "from": "FROM",
             "iz": "FROM",
-            "import": "IMPORT",
+            "uvoz": "IMPORT",
             "importiraj": "IMPORT",
             "konstanta": "CONSTANT",
             "razred": "CLASS",
