@@ -14,7 +14,7 @@ async function add_string(text: string, cursorMove?: [number, number]): Promise<
         const selection = editor.selection;
 
         // Check if the selection is empty and the character before the cursor is not a space
-        if (selection.isEmpty) {
+        if (selection.isEmpty && text !== " " && text !== "\n") {
             // Check if the cursor is not at the beginning of the line
             if (selection.active.character > 0) {
                 // Ensure that the character position does not become negative
