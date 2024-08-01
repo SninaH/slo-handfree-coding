@@ -13,7 +13,7 @@ function createWavFromBuffer(buffer, sampleRate) {
     return wav;
 }
 
-async function transcribe(wav, transcribeLink, healthCheckLink, outputChannel) {
+async function transcribe(wav, transcribeLink, healthCheckLink, transcriptionJSONName, outputChannel) {
 
     try {
         // Perform health check
@@ -37,7 +37,7 @@ async function transcribe(wav, transcribeLink, healthCheckLink, outputChannel) {
         }
 
         const transcriptionResult = await transcriptionResponse.json();
-        return transcriptionResult["result"];
+        return transcriptionResult[transcriptionJSONName];
     } catch (error) {
         outputChannel.appendLine(`[slo-handsfree ERROR] "${error.message}". Is transcription server running?`);
 
@@ -47,7 +47,7 @@ async function transcribe(wav, transcribeLink, healthCheckLink, outputChannel) {
     }
 }
 
-function initializeRecorder(outputChannel, transcribeLink, healthCheckLink, callback) {
+function initializeRecorder(outputChannel, transcribeLink, healthCheckLink, transcriptionJSONName, callback) {
     transcriptionCallback = callback; // Assign the passed callback to the global variable
     recorder = new SpeechRecorder({
         sampleRate,
@@ -69,7 +69,7 @@ function initializeRecorder(outputChannel, transcribeLink, healthCheckLink, call
 
             if (buffer.length > 0) {
                 const wav = createWavFromBuffer(buffer, sampleRate);
-                const transcription = await transcribe(wav, transcribeLink, healthCheckLink, outputChannel);
+                const transcription = await transcribe(wav, transcribeLink, healthCheckLink, transcriptionJSONName, outputChannel);
                 console.log("Transcription:", transcription);
                 if (transcriptionCallback) {
                     transcriptionCallback(transcription); // Call the callback with the transcription result
@@ -80,12 +80,12 @@ function initializeRecorder(outputChannel, transcribeLink, healthCheckLink, call
     });
 }
 
-async function startRecording(transcribeLink, healthCheckLink, outputChannel) {
+async function startRecording(transcribeLink, healthCheckLink, transcriptionJSONName, outputChannel) {
     try {
         return new Promise((resolve, reject) => {
             // Check if the recorder is already initialized and not currently recording
             if (!recorder || recorder.isRecording === false) {
-                initializeRecorder(outputChannel, transcribeLink, healthCheckLink, (transcription) => {
+                initializeRecorder(outputChannel, transcribeLink, healthCheckLink, transcriptionJSONName, (transcription) => {
                     resolve(transcription); // Resolve the promise with the transcription result
                 });
                 console.log("Recording started...");

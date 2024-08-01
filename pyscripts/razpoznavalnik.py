@@ -13,6 +13,11 @@ else:
     transcribe_link = link + "/api/transcribe"
     health_check_link = link + "/api/healthCheck"
 
+if len(sys.argv) > 2:
+    json_result_name = sys.argv[3]
+else:
+    json_result_name = "result"
+
 try:
     result = requests.get(health_check_link)
 except ConnectionError:
@@ -35,7 +40,7 @@ try:
     # audioFile.close()
     print(result)
     try:
-        print(result.json()["result"])
+        print(result.json()[json_result_name])
     except Exception as e:
         print(e)
         print("unable to print transcription")

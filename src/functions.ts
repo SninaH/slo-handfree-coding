@@ -37,20 +37,22 @@ export const changeKeyWithObjectValue = (text: string, obj: { [key: string]: str
     if (allowedKeywords !== undefined) {
         obj = Object.fromEntries(Object.entries(obj).filter(([key, value]) => allowedKeywords.includes(value)));
     }
-    //change keys with values so that it prioritizes longer keys (for example 'enojni narekovaj' before 'narekovaj')
+    // Change keys with values so that it prioritizes longer keys (for example 'enojni narekovaj' before 'narekovaj')
     const keysSortedByLengthDesc = Object.keys(obj).sort((a, b) => b.length - a.length);
-    const regex = new RegExp(`\\b(${keysSortedByLengthDesc.join('|')})\\b`, 'g');
-    return text.replace(regex, match => obj[match]); //replace method returns new string
+    // Adjusted regex to manually specify word boundaries for non-ASCII characters
+    const regex = new RegExp(`(?<=\\s|^)(${keysSortedByLengthDesc.join('|')})(?=\\s|$)`, 'g');
+    return text.replace(regex, match => obj[match]); // Replace method returns new string
 };
 
 export const changeFirstOccurence = (text: string, obj: { [key: string]: string }, allowedKeywords?: string[], multipleOccurence?: string[]): string => {
     if (allowedKeywords !== undefined) {
         obj = Object.fromEntries(Object.entries(obj).filter(([key, value]) => allowedKeywords.includes(value)));
     }
-    //change keys with values so that it prioritizes longer keys (for example 'enojni narekovaj' before 'narekovaj')
-    //find and change key with value only for the first occurence of the key except for key that has value in multipleOccurence
+    // Change keys with values so that it prioritizes longer keys (for example 'enojni narekovaj' before 'narekovaj')
+    // Find and change key with value only for the first occurrence of the key except for key that has value in multipleOccurrence
     const keysSortedByLengthDesc = Object.keys(obj).sort((a, b) => b.length - a.length);
-    const regex = new RegExp(`\\b(${keysSortedByLengthDesc.join('|')})\\b`, 'g');
+    // Adjusted regex to manually specify word boundaries for non-ASCII characters
+    const regex = new RegExp(`(?<=\\s|^)(${keysSortedByLengthDesc.join('|')})(?=\\s|$)`, 'g');
     let usedValue: Set<string> = new Set();
     return text.replace(regex, match => {
         if (multipleOccurence && multipleOccurence.includes(obj[match])) {

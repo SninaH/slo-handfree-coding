@@ -21,7 +21,10 @@ export default class Extension {
     startListeningOnClick: vscode.Disposable;
     transcriberLinkTranscribe: string;
     transcriberLinkHealthCheck: string;
+    transcriptionResultJSONName: string;
     outputchannel: vscode.OutputChannel;
+    delimiters: [string, string] = ['<', '>'];
+    transcriptionToLowercase: boolean = true;
 
     constructor(context: vscode.ExtensionContext, outputchannel: vscode.OutputChannel) {
         this.context = context;
@@ -36,6 +39,13 @@ export default class Extension {
         //get the path to the transcriber from settings
         this.transcriberLinkTranscribe = vscode.workspace.getConfiguration('slo-handsfree-coding').get('transcriberLinkTranscribe') as string;
         this.transcriberLinkHealthCheck = vscode.workspace.getConfiguration('slo-handsfree-coding').get('transcriberLinkHealthCheck') as string;
+        this.transcriptionResultJSONName = vscode.workspace.getConfiguration('slo-handsfree-coding').get('transcriptionResultJSONName') as string;
+
+        //get delimiters from settings
+        this.delimiters = vscode.workspace.getConfiguration('slo-handsfree-coding').get('delimiters') as [string, string];
+
+        //get settings if the transcription should be converted to lowercase
+        this.transcriptionToLowercase = vscode.workspace.getConfiguration('slo-handsfree-coding').get('transcriptionToLowercase') as boolean;
 
         //create output channel
         this.outputchannel = outputchannel;
@@ -65,8 +75,12 @@ export default class Extension {
         this.startListeningOnClick = vscode.commands.registerCommand(StatusBarOnClickCommandName, async () => {
             let transcription: string = await this.startListening();
             //remove tags for emotion recognition and question marks
-            transcription = transcription.replace(/<[^>]+>/g, '');
+            const regex = new RegExp(`${this.delimiters[0]}[^${this.delimiters[1]}]*${this.delimiters[1]}`, 'g');
+            transcription = transcription.replace(regex, '');
             transcription = transcription.replace(/⁇/g, '');
+            if (this.transcriptionToLowercase) {
+                transcription = transcription.toLowerCase();
+            }
             vscode.window.showInformationMessage(transcription);
             //procesiraj ukaz
             let command: dictationMode = await CommandHandler(this.context, this.outputchannel, transcription, this.narekovanje, this.posebniZnaki, this.crkuj, this.capsLock);
@@ -142,11 +156,15 @@ export default class Extension {
 
     private async pythonTranscribing(): Promise<string> {
         let options: Options = {
-            args: [this.transcriberLinkTranscribe, this.transcriberLinkHealthCheck]
+            args: [
+                this.transcriberLinkTranscribe,
+                this.transcriberLinkHealthCheck,
+                this.transcriptionResultJSONName
+            ]
         };
         console.log('PythonShell started for recording and transcription');
         this.outputchannel.appendLine('PythonShell started for recording and transcription');
-        
+
 
         const timeout = (ms: number) => new Promise(resolve => setTimeout(resolve, ms, 'Timeout'));
         const milliseconds: number = this.transcriberTimeout * 1000;
@@ -158,7 +176,7 @@ export default class Extension {
         if (messages === 'Timeout') {
             console.error(`Operation timed out after ${this.transcriberTimeout} seconds`);
             this.outputchannel.appendLine(`[ERROR] Recording timed out after ${this.transcriberTimeout} seconds`);
-            
+
             // Handle timeout case here
             this.updateStatusBarNotListening();
             throw new Error('Transcription timed out');
@@ -166,7 +184,7 @@ export default class Extension {
             //označi, da ne posluša več
             console.log('Listening stopped');
             this.outputchannel.appendLine('Listening stopped');
-            
+
             this.updateStatusBarNotListening();
             console.log(messages);
 
@@ -178,18 +196,18 @@ export default class Extension {
                 if (lastMessage === '[ERROR] Unable to connect to server') {
                     vscode.window.showErrorMessage('Napaka pri povezavi s strežnikom. Preverite ali deluje razpoznavalnik (docker) in ali ste napisali pravo povezavo v nastavitvah.');
                     this.outputchannel.appendLine('Napaka pri povezavi s strežnikom. Preverite ali deluje razpoznavalnik (docker) in ali ste napisali pravo povezavo v nastavitvah.');
-                    
+
                     throw new Error('server connection error: transcriber not running or wrong link in settings');
                 } else {
                     (lastMessage === '<Response [200]>') ? transcription = '' : transcription = lastMessage;
                     console.log('Transcription:', transcription);
                     this.outputchannel.appendLine('Python Transcription: ' + transcription);
-                    
+
                     return transcription;
                 }
             } else {
                 this.outputchannel.appendLine('No messages received from PythonShell');
-                
+
                 throw new Error('No messages received from PythonShell');
             }
         }
@@ -197,34 +215,34 @@ export default class Extension {
 
     private async serenadeTranscribing(): Promise<string> {
         try {
-            const transcription = await startRecording(this.transcriberLinkTranscribe, this.transcriberLinkHealthCheck, this.outputchannel);
+            const transcription = await startRecording(this.transcriberLinkTranscribe, this.transcriberLinkHealthCheck, this.transcriptionResultJSONName, this.outputchannel);
             console.log('Transcription:', transcription);
             this.outputchannel.appendLine('Serenade speech-recorder Transcription: ' + transcription);
-            
+
             return transcription;
         } catch (error) {
             if (error instanceof Error && error.message === '[ERROR] Health check failed') {
                 vscode.window.showErrorMessage('Napaka pri healthcheck strežnika. Preverite ali deluje razpoznavalnik (docker) in ali ste napisali pravo povezavo v nastavitvah.');
-                    this.outputchannel.appendLine('Napaka pri healthcheck strežnika. Preverite ali deluje razpoznavalnik (docker) in ali ste napisali pravo povezavo v nastavitvah.');
-                    
-                    throw new Error('server connection error: transcriber not running or wrong link in settings');
+                this.outputchannel.appendLine('Napaka pri healthcheck strežnika. Preverite ali deluje razpoznavalnik (docker) in ali ste napisali pravo povezavo v nastavitvah.');
+
+                throw new Error('server connection error: transcriber not running or wrong link in settings');
                 // Handle the specific error, e.g., by notifying the user or taking corrective action
             } else {
                 // Handle other types of errors
                 console.error("An unexpected error occurred:", error);
                 this.outputchannel.appendLine("An unexpected error occurred: " + error);
-                
+
                 throw error;
             }
         } finally {
             await stopRecording(this.outputchannel);
             console.log('Listening stopped');
             this.outputchannel.appendLine('Listening stopped');
-            
+
             this.updateStatusBarNotListening();
-            
+
         }
-        
+
     }
 
     private async getRecorderSetting(): Promise<string> {
@@ -234,7 +252,7 @@ export default class Extension {
         }
         return recorder;
     }
-    
+
     private async transcribeBasedOnRecorder(recorder: string): Promise<string> {
         switch (recorder) {
             case 'serenade':
@@ -245,11 +263,11 @@ export default class Extension {
                 throw new Error(`Unsupported recorder: ${recorder}`);
         }
     }
-    
+
     async startListening(): Promise<string> {
         console.log('Listening started');
         this.outputchannel.appendLine('Listening started');
-        
+
         if (this.crkuj) {
             this.myStatusBarItem.text = `$(mic-filled) črkovanje`;
         } else if (this.narekovanje && this.posebniZnaki) {

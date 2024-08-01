@@ -54,6 +54,12 @@
           "default": "http://localhost:8000/api/healthCheck",
           "description": "Link to the transcriber server you have set up with docker from https://github.com/clarinsi/Slovene_ASR_e2e/ or https://github.com/clarinsi/Slovene_ASR_e2e/pull/5 for health check (default: http://localhost:8000/api/healthCheck)"
         },
+        "slo-handsfree-coding.transcriptionResultJSONName":{
+          "type": "string",
+          "scope": "application",
+          "default": "result",
+          "description": "Name of the key in the JSON object that contains the transcription result (default: result)"
+        },
         "slo-handsfree-coding.speechRecorder": {
           "type": "string",
           "scope": "application",
@@ -73,6 +79,21 @@
           "scope": "application",
           "default": 120,
           "description": "Timeout in seconds for the transcriber server: time needed to both record and transcribe (default: 180 = 3 minutes)"
+        },
+        "slo-handsfree-coding.delimiters":{
+          "type": "array",
+          "scope": "application",
+          "default": ["<", ">"],
+          "description": "The text between these two delimiters will be ignored when processing the transcription. (default: <>)",
+          "items": {
+            "type": "string"
+          }
+        },
+        "slo-handsfree-coding.transcriptionToLowercase": {
+          "type": "boolean",
+          "scope": "application",
+          "default": true,
+          "description": "If true, the transcription will be converted to lowercase before processing (default: true)"
         },
         "slo-handsfree-coding.commandsName": {
           "type": "object",
@@ -145,6 +166,7 @@
             "nova": "NEW",
             "nov": "NEW",
             "novo": "NEW",
+            "novi": "NEW",
             "označi": "SELECT",
             "označ": "SELECT",
             "izbriši": "DELETE",
@@ -234,6 +256,8 @@
             "stran": "PAGE",
             "prazna vrstica": "BLANK_LINE",
             "prazno vrstico": "BLANK_LINE",
+            "prazne vrstice": "BLANK_LINE",
+            "prazni vrstici": "BLANK_LINE",
             "zavihek": "TAB",
             "zavihka": "TAB",
             "zavihki": "TAB",
@@ -246,7 +270,11 @@
             "oklepaj": "INSIDE_BRACKETS",
             "znak": "CHARACTER",
             "znaka": "CHARACTER",
-            "beseda": "WORD"
+            "beseda": "WORD",
+            "besedo": "WORD",
+            "besede": "WORD",
+            "besed": "WORD",
+            "besedi": "WORD"
           },
           "additionalProperties": {
             "type": "string"
