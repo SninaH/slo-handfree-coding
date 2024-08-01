@@ -39,8 +39,8 @@ function moveToInsideClosestBrackets() {
     const cursorPositionInLine = currentPosition.character;
 
     // Define opening and closing brackets
-    const openingBrackets = ['(', '[', '{'];
-    const closingBrackets = [')', ']', '}'];
+    const openingBrackets = ['(', '[', '{', "'", '"'];
+    const closingBrackets = [')', ']', '}', "'", '"'];
 
     let closestBracketPosition: vscode.Position | null = null;
     let closestBracketDistance = Infinity;

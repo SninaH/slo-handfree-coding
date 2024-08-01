@@ -21,10 +21,10 @@ async function add_string(text: string, cursorMove?: [number, number]): Promise<
                 const characterOffset = selection.active.character > 0 ? -1 : 0;
                 const positionBeforeCursor = selection.active.translate(0, characterOffset);
                 const rangeBeforeCursor = new vscode.Range(positionBeforeCursor, selection.active);
-                const textBeforeCursor = editor.document.getText(rangeBeforeCursor);
-
+                const characterBeforeCursor = editor.document.getText(rangeBeforeCursor);
+                const brackets = ["(", "[", "{", "'", "\""];
                 // Use a regular expression to check for any kind of whitespace character
-                if (!/\s/.test(textBeforeCursor)) {
+                if (!/\s/.test(characterBeforeCursor) && !brackets.includes(characterBeforeCursor)) {
                     text = " " + text;
                 }
             }
@@ -234,16 +234,17 @@ async function executeTwoTokens(context: vscode.ExtensionContext, kT0: tokenType
             await pyObjWithNameToFunction[pyObj](name);
             return args.slice(2);
         }
-    } else if (kT0 === tokenType.none && kT1 === tokenType.pyObj) {
-        const pyObj = args[1];
-        if (pyObj in pyObjWithNameToFunction) {
-            const name = args[0];
-            await pyObjWithNameToFunction[pyObj](name);
-            return args.slice(2);
-        }
-    }
+    } 
+    // else if (kT0 === tokenType.none && kT1 === tokenType.pyObj) {
+    //     const pyObj = args[1];
+    //     if (pyObj in pyObjWithNameToFunction) {
+    //         const name = args[0];
+    //         await pyObjWithNameToFunction[pyObj](name);
+    //         return args.slice(2);
+    //     }
+    // }
 
-    return dictationMode.invalid_arguments;
+    return executeOneToken(context, kT0, args);
 }
 
 export default async function ADD(args: any[]): Promise<dictationMode> {

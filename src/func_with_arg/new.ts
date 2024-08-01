@@ -33,7 +33,7 @@ async function add_at_position(text: string, line: number, character: number) {
     }
 }
 
-async function addIndentedString(template: string) {
+async function addWithSettingIndentation(template: string) {
     const insertSpaces: boolean = vscode.workspace.getConfiguration('editor').get('insertSpaces', true);
     const tabSize: number = vscode.workspace.getConfiguration('editor').get('tabSize', 4);
     const indentation = insertSpaces ? ' '.repeat(tabSize) : '\t';
@@ -41,6 +41,95 @@ async function addIndentedString(template: string) {
     // Replace hard-coded indentation with user's indentation setting
     const indentedTemplate = template.replace(/^    /gm, indentation);
     await add_new_string(indentedTemplate);
+}
+
+async function add_with_previous_indentation(text: string) {
+    const editor = vscode.window.activeTextEditor;
+    if (editor) {
+        const currentPosition = editor.selection.active;
+        const cursorLine = currentPosition.line;
+
+        let indentation = '';
+        if (cursorLine >= 0) {
+            const cursorLineText = editor.document.lineAt(cursorLine).text;
+            const hasNonWhitespace = /\S/.test(cursorLineText); // Check for non-whitespace characters
+
+            if (hasNonWhitespace) {
+                const indentationMatch = cursorLineText.match(/^\s*/);
+                indentation = indentationMatch ? indentationMatch[0] : '';
+            }
+        }
+
+        const lines = text.split('\n');
+        const indentedText = lines.map(line => `${indentation}${line}`).join('\n');
+
+        const newPosition = currentPosition.with(currentPosition.line + 1, 0);
+        await editor.edit(editBuilder => {
+            editBuilder.insert(newPosition, `\n${indentedText}`);
+        });
+    }
+}
+
+async function add_with_one_less_previous_indentation(text: string) {
+
+    const editor = vscode.window.activeTextEditor;
+    if (editor) {
+        const currentPosition = editor.selection.active;
+        const cursorLine = currentPosition.line;
+        let indentation = '';
+
+        const cursorLineText = editor.document.lineAt(cursorLine).text;
+        const hasNonWhitespace = /\S/.test(cursorLineText); // Check for non-whitespace characters
+        
+        if (hasNonWhitespace) {
+            const indentationMatch = cursorLineText.match(/^\s*/);
+            if (indentationMatch) {
+                const currentIndentation = indentationMatch[0];
+                const tabSize = editor.options.tabSize as number || 4; // Get tab size from editor settings, default to 4 spaces
+                const insertSpaces = editor.options.insertSpaces as boolean || false; // Check if spaces are used for indentation
+
+                let reducedIndentation = '';
+                if (insertSpaces) {
+                    // Reduce spaces by one tab size
+                    reducedIndentation = currentIndentation.length >= tabSize ? currentIndentation.slice(0, -tabSize) : '';
+                } else {
+                    // Reduce tabs by one tab character
+                    reducedIndentation = currentIndentation.replace(/\t$/, '');
+                }
+                indentation = reducedIndentation;
+            }
+        }
+
+
+        const lines = text.split('\n');
+        const indentedText = lines.map(line => `${indentation}${line}`).join('\n');
+
+        const newPosition = currentPosition.with(currentPosition.line + 1, 0);
+        await editor.edit(editBuilder => {
+            editBuilder.insert(newPosition, `\n${indentedText}`);
+        });
+
+    }
+}
+
+async function addWithSettingAndPreviousIndentation(template: string) {
+    const insertSpaces: boolean = vscode.workspace.getConfiguration('editor').get('insertSpaces', true);
+    const tabSize: number = vscode.workspace.getConfiguration('editor').get('tabSize', 4);
+    const indentation = insertSpaces ? ' '.repeat(tabSize) : '\t';
+
+    // Replace hard-coded indentation with user's indentation setting
+    const indentedTemplate = template.replace(/^    /gm, indentation);
+    await add_with_previous_indentation(indentedTemplate);
+}
+
+async function addWithSettingAndOneLessPreviousIndentation(template: string) {
+    const insertSpaces: boolean = vscode.workspace.getConfiguration('editor').get('insertSpaces', true);
+    const tabSize: number = vscode.workspace.getConfiguration('editor').get('tabSize', 4);
+    const indentation = insertSpaces ? ' '.repeat(tabSize) : '\t';
+
+    // Replace hard-coded indentation with user's indentation setting
+    const indentedTemplate = template.replace(/^    /gm, indentation);
+    await add_with_one_less_previous_indentation(indentedTemplate);
 }
 
 // Define a helper type for the functions
@@ -55,7 +144,7 @@ const pyObjectToFunction: { [key: string]: PyFunc } = {
     },
 
     "CONSTANT": async () => {
-        await add_new_string(`MY_CONSTANT = None`);
+        await add_with_previous_indentation(`MY_CONSTANT = None`);
     },
 
     "CLASS": async () => {
@@ -70,28 +159,28 @@ const pyObjectToFunction: { [key: string]: PyFunc } = {
 
     # Add more methods as needed
 `;
-        await addIndentedString(pythonClassTemplate);
+        await addWithSettingIndentation(pythonClassTemplate);
 
     },
 
     "OBJECT": async () => {
-        await add_new_string(`my_object = MyClass()`);
+        await add_with_previous_indentation(`my_object = MyClass()`);
     },
 
     "FUNCTION": async () => {
         const functionTemplate = `def my_function():
     # Function definition
     pass`;
-        await addIndentedString(functionTemplate);
+        await addWithSettingIndentation(functionTemplate);
     },
     "METHOD": async () => {
         const methodTemplate = `def my_method(self):
     # Method definition
     pass`;
-        await addIndentedString(methodTemplate);
+        await addWithSettingIndentation(methodTemplate);
     },
     "RETURN": async () => {
-        await add_new_string(`return value`);
+        await add_with_previous_indentation(`return value`);
     },
     "PARAMETER": async (context: vscode.ExtensionContext) => {
         const currentLine = vscode.window.activeTextEditor?.selection.active.line;
@@ -118,73 +207,73 @@ const pyObjectToFunction: { [key: string]: PyFunc } = {
     //////////////////////
 
     "LIST": async () => {
-        await add_new_string(`my_list = []`);
+        await add_with_previous_indentation(`my_list = []`);
     },
     "TUPLE": async () => {
-        await add_new_string(`my_tuple = (value1, value2)`);
+        await add_with_previous_indentation(`my_tuple = (value1, value2)`);
     },
     "DICTIONARY": async () => {
-        await add_new_string(`my_dict = {}`);
+        await add_with_previous_indentation(`my_dict = {}`);
     },
     "KEY": async () => {
-        await add_new_string(`key: value,`);
+        await add_with_previous_indentation(`key: value,`);
     },
     "VALUE": async () => {
-        await add_new_string(`my_dict[key] = 'value'`);
+        await add_with_previous_indentation(`my_dict[key] = 'value'`);
     },
     "SET": async () => {
-        await add_new_string(`my_set = {value1, value2}`);
+        await add_with_previous_indentation(`my_set = {value1, value2}`);
     },
     "IF": async () => {
-        await addIndentedString(`if condition:
+        await addWithSettingAndPreviousIndentation(`if condition:
     # Code block
     pass`);
     },
     "ELIF": async () => {
-        await addIndentedString(`elif condition:
+        await addWithSettingAndOneLessPreviousIndentation(`elif condition:
     # Code block
     pass`);
     },
     "ELSE": async () => {
-        await addIndentedString(`else:
+        await addWithSettingAndOneLessPreviousIndentation(`else:
     # Code block
     pass`);
     },
 
     "WHILE": async () => {
-        await addIndentedString(`while (condition):
+        await addWithSettingAndPreviousIndentation(`while (condition):
     # Code block
     pass`);
     },
     "FOR_EACH": async () => {
-        await addIndentedString(`for key, value in my_dict.items():
+        await addWithSettingAndPreviousIndentation(`for key, value in my_dict.items():
     # Code block
     pass`);
     },
     "FOR": async () => {
-        await addIndentedString(`for i in range(len(my_list)):
+        await addWithSettingAndPreviousIndentation(`for i in range(len(my_list)):
     # Code block
     pass`);
     },
     "RANGE": async () => {
-        await addIndentedString(`for i in range(start, end)
+        await addWithSettingAndPreviousIndentation(`for i in range(start, end)
     # Code block
     pass`);
     },
 
     "PRINT": async () => {
-        await add_new_string(`print()`);
+        await add_with_previous_indentation(`print()`);
     },
     "INPUT": async () => {
-        await add_new_string(`user_input = input("Enter a value: ")`);
+        await add_with_previous_indentation(`user_input = input("Enter a value: ")`);
     },
     "OPEN": async () => {
-        await addIndentedString(`with open('file_name', 'r') as file:
+        await addWithSettingAndPreviousIndentation(`with open('file_name', 'r') as file:
     # Code block
     pass`);
     },
     "TRY": async () => {
-        await addIndentedString(`try:
+        await addWithSettingAndPreviousIndentation(`try:
     # Code block
     pass
 except Exception as e:
@@ -192,35 +281,35 @@ except Exception as e:
     pass`);
     },
     "EXCEPT": async () => {
-        await addIndentedString(`except Exception as e:
+        await addWithSettingAndOneLessPreviousIndentation(`except Exception as e:
     # Code block
     pass`);
     },
 
     "VARIABLE": async () => {
-        await add_new_string(`my_variable = None`);
+        await add_with_previous_indentation(`my_variable = None`);
     },
     "TYPE": async () => {
-        await add_new_string(`type(my_variable)`);
+        await add_with_previous_indentation(`type(my_variable)`);
     },
 
     "INTEGER": async () => {
-        await add_new_string(`my_integer = 0`);
+        await add_with_previous_indentation(`my_integer = 0`);
     },
     "FLOAT": async () => {
-        await add_new_string(`my_float = 0.0`);
+        await add_with_previous_indentation(`my_float = 0.0`);
     },
     "COMPLEX": async () => {
-        await add_new_string(`my_complex = 0 + 0j`);
+        await add_with_previous_indentation(`my_complex = 0 + 0j`);
     },
     "STRING": async () => {
-        await add_new_string(`my_string = ""`);
+        await add_with_previous_indentation(`my_string = ""`);
     },
     "BOOLEAN": async () => {
-        await add_new_string(`my_boolean = True`);
+        await add_with_previous_indentation(`my_boolean = True`);
     },
     "NONE": async () => {
-        await add_new_string(`my_none = None`);
+        await add_with_previous_indentation(`my_none = None`);
     }
 
 
@@ -232,7 +321,7 @@ type PyFuncWithName = ((name: string) => Promise<void>) | ((name: string, contex
 const pyObjWithNameToFunction: { [key: string]: PyFuncWithName } = {
     "CONSTANT": async (name: string) => {
         const snakeCaseName = name.split(' ').join('_').toUpperCase();
-        await add_new_string(`${snakeCaseName} = None`);
+        await add_with_previous_indentation(`${snakeCaseName} = None`);
     },
 
     "CLASS": async (name: string) => {
@@ -248,36 +337,36 @@ const pyObjWithNameToFunction: { [key: string]: PyFuncWithName } = {
 
     # Add more methods as needed
 `;
-        await addIndentedString(pythonClassTemplate);
+        await addWithSettingIndentation(pythonClassTemplate);
     },
     "OBJECT": async (name: string) => {
         const snakeCaseName = name.split(' ').join('_').toLowerCase();
-        await add_new_string(`${snakeCaseName} = MyClass()`);
+        await add_with_previous_indentation(`${snakeCaseName} = MyClass()`);
     },
     "FUNCTION": async (name: string) => {
         const snakeCaseName = name.split(' ').join('_').toLowerCase();
-        await addIndentedString(`def ${snakeCaseName}():
+        await addWithSettingIndentation(`def ${snakeCaseName}():
     # Function definition
     pass`);
     },
     "METHOD": async (name: string) => {
         const snakeCaseName = name.split(' ').join('_').toLowerCase();
-        await addIndentedString(`def ${snakeCaseName}(self):
+        await addWithSettingIndentation(`def ${snakeCaseName}(self):
     # Method definition
     pass`);
     },
 
     "DICTIONARY": async (name: string) => {
         const snakeCaseName = name.split(' ').join('_').toLowerCase();
-        await addIndentedString(`${snakeCaseName} = {}`);
+        await addWithSettingAndPreviousIndentation(`${snakeCaseName} = {}`);
     },
     "LIST": async (name: string) => {
         const snakeCaseName = name.split(' ').join('_').toLowerCase();
-        await addIndentedString(`${snakeCaseName} = []`);
+        await addWithSettingAndPreviousIndentation(`${snakeCaseName} = []`);
     },
     "VARIABLE": async (name: string) => {
         const snakeCaseName = name.split(' ').join('_').toLowerCase();
-        await addIndentedString(`${snakeCaseName} = None`);
+        await addWithSettingAndPreviousIndentation(`${snakeCaseName} = None`);
     },
     "PARAMETER": async (name: string, context: vscode.ExtensionContext) => {
         const currentLine = vscode.window.activeTextEditor?.selection.active.line;
@@ -308,14 +397,14 @@ const pyObjWithNameAndParamToFunction: { [key: string]: (name: string, param: st
     "FUNCTION": async (name: string, param: string) => {
         const snakeCaseName = name.split(' ').join('_').toLowerCase();
         const snakeCaseParam = param.split(' ').join('_').toLowerCase();
-        await addIndentedString(`def ${snakeCaseName}(${snakeCaseParam}):
+        await addWithSettingIndentation(`def ${snakeCaseName}(${snakeCaseParam}):
     # Function definition
     pass`);
     },
     "METHOD": async (name: string, param: string) => {
         const snakeCaseName = name.split(' ').join('_').toLowerCase();
         const snakeCaseParam = param.split(' ').join('_').toLowerCase();
-        await addIndentedString(`def ${snakeCaseName}(self, ${snakeCaseParam}):
+        await addWithSettingIndentation(`def ${snakeCaseName}(self, ${snakeCaseParam}):
     # Method definition
     pass`);
     },
