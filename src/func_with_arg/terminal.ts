@@ -19,7 +19,7 @@ export default async function TERMINAL(args: any[]): Promise<dictationMode> {
                 vscode.commands.executeCommand('workbench.action.terminal.focus');
                 break;
             case "HIDE":
-                vscode.commands.executeCommand('workbench.action.terminal.hide');
+                vscode.commands.executeCommand('workbench.action.closePanel');
                 break;
             case "CLEAR":  
                 vscode.commands.executeCommand('workbench.action.terminal.clear');

@@ -126,9 +126,6 @@ const pyObjectToFunction: { [key: string]: () => Promise<void> } = {
     "INTEGER": async () => {
         await add_string(`int`);
     },
-    "LONG": async () => {
-        await add_string(`long`);
-    },
     "FLOAT": async () => {
         await add_string(`float`);
     },
