@@ -201,6 +201,7 @@
             "metoda": "METHOD",
             "funkcija": "FUNCTION",
             "funkcije": "FUNCTION",
+            "funkcijo": "FUNCTION",
             "vrni": "RETURN",
             "parameter": "PARAMETER",
             "argument": "ARGUMENT",

@@ -3,7 +3,7 @@ import { PythonShell, Options } from 'python-shell';
 import CommandHandler from "./find-command-offline";
 import { dictationMode } from './functions';
 // Import from the razpoznavalnik.js file
-import { startRecording, stopRecording } from './razpoznavalnik.js';
+import { getLastTranscription, stopRecording } from './razpoznavalnik.js';
 import * as path from 'path';
 
 
@@ -113,20 +113,13 @@ export default class Extension {
             }
 
             if (command === dictationMode.stop) {
-                this.narekovanje = false;
-                this.posebniZnaki = true;
-                this.crkuj = false;
-                this.capsLock = false;
+                this.stopListening();
             }
-            //če ukaz ni 'stop', nadaljujemo z poslušanjem
+            //če ukaz ni 'stop', in stop gumb ni pritisnjen nadaljujemo z poslušanjem
             else if (!this.pressedStopButton) {
                 vscode.commands.executeCommand(StatusBarOnClickCommandName);
             } else if (this.pressedStopButton) {
-                this.narekovanje = false;
-                this.posebniZnaki = true;
-                this.crkuj = false;
-                this.capsLock = false;
-                this.pressedStopButton = false;
+                this.stopListening();
                 this.stopButton.text = `$(stop-circle) Stop poslušanje`;
             }
 
@@ -149,6 +142,18 @@ export default class Extension {
 
     }
 
+    private async stopListening(): Promise<void> {
+        this.narekovanje = false;
+        this.posebniZnaki = true;
+        this.crkuj = false;
+        this.capsLock = false;
+        const recorder: string = await this.getRecorderSetting();
+        if (recorder === 'serenade') {
+            await stopRecording(this.outputchannel);
+        }
+        this.updateStatusBarNotListening();
+    }
+
     private updateStatusBarNotListening(): void {
         this.myStatusBarItem.text = `$(mic) ne poslušam`;
         this.myStatusBarItem.show();
@@ -165,57 +170,43 @@ export default class Extension {
         console.log('PythonShell started for recording and transcription');
         this.outputchannel.appendLine('PythonShell started for recording and transcription');
 
+        const messages = await PythonShell.run(this.pythonRazpoznavalnikURL, options) as string[];
 
-        const timeout = (ms: number) => new Promise(resolve => setTimeout(resolve, ms, 'Timeout'));
-        const milliseconds: number = this.transcriberTimeout * 1000;
-        const messages = await Promise.race([
-            PythonShell.run(this.pythonRazpoznavalnikURL, options),
-            timeout(milliseconds)
-        ]) as string[] | "Timeout";
+        //označi, da ne posluša več
+        console.log('Listening stopped');
+        this.outputchannel.appendLine('Listening stopped');
 
-        if (messages === 'Timeout') {
-            console.error(`Operation timed out after ${this.transcriberTimeout} seconds`);
-            this.outputchannel.appendLine(`[ERROR] Recording timed out after ${this.transcriberTimeout} seconds`);
-
-            // Handle timeout case here
-            this.updateStatusBarNotListening();
-            throw new Error('Transcription timed out');
-        } else {
-            //označi, da ne posluša več
-            console.log('Listening stopped');
-            this.outputchannel.appendLine('Listening stopped');
-
-            this.updateStatusBarNotListening();
-            console.log(messages);
+        this.updateStatusBarNotListening();
+        console.log(messages);
 
 
-            if (messages && messages.length > 0) {
-                let lastMessage = messages[messages.length - 1];
-                let transcription: string;
-                //TODO: preveri vse tipe Response, ne le 200
-                if (lastMessage === '[ERROR] Unable to connect to server') {
-                    vscode.window.showErrorMessage('Napaka pri povezavi s strežnikom. Preverite ali deluje razpoznavalnik (docker) in ali ste napisali pravo povezavo v nastavitvah.');
-                    this.outputchannel.appendLine('Napaka pri povezavi s strežnikom. Preverite ali deluje razpoznavalnik (docker) in ali ste napisali pravo povezavo v nastavitvah.');
+        if (messages && messages.length > 0) {
+            let lastMessage = messages[messages.length - 1];
+            let transcription: string;
+            //TODO: preveri vse tipe Response, ne le 200
+            if (lastMessage === '[ERROR] Unable to connect to server') {
+                vscode.window.showErrorMessage('Napaka pri povezavi s strežnikom. Preverite ali deluje razpoznavalnik (docker) in ali ste napisali pravo povezavo v nastavitvah.');
+                this.outputchannel.appendLine('Napaka pri povezavi s strežnikom. Preverite ali deluje razpoznavalnik (docker) in ali ste napisali pravo povezavo v nastavitvah.');
 
-                    throw new Error('server connection error: transcriber not running or wrong link in settings');
-                } else {
-                    (lastMessage === '<Response [200]>') ? transcription = '' : transcription = lastMessage;
-                    console.log('Transcription:', transcription);
-                    this.outputchannel.appendLine('Python Transcription: ' + transcription);
-
-                    return transcription;
-                }
+                throw new Error('server connection error: transcriber not running or wrong link in settings');
             } else {
-                this.outputchannel.appendLine('No messages received from PythonShell');
+                (lastMessage === '<Response [200]>') ? transcription = '' : transcription = lastMessage;
+                console.log('Transcription:', transcription);
+                this.outputchannel.appendLine('Python Transcription: ' + transcription);
 
-                throw new Error('No messages received from PythonShell');
+                return transcription;
             }
+        } else {
+            this.outputchannel.appendLine('No messages received from PythonShell');
+
+            throw new Error('No messages received from PythonShell');
         }
+
     }
 
     private async serenadeTranscribing(): Promise<string> {
         try {
-            const transcription = await startRecording(this.transcriberLinkTranscribe, this.transcriberLinkHealthCheck, this.transcriptionResultJSONName, this.outputchannel);
+            const transcription = await getLastTranscription(this.transcriberLinkTranscribe, this.transcriberLinkHealthCheck, this.transcriptionResultJSONName, this.outputchannel);
             console.log('Transcription:', transcription);
             this.outputchannel.appendLine('Serenade speech-recorder Transcription: ' + transcription);
 
@@ -226,23 +217,13 @@ export default class Extension {
                 this.outputchannel.appendLine('Napaka pri healthcheck strežnika. Preverite ali deluje razpoznavalnik (docker) in ali ste napisali pravo povezavo v nastavitvah.');
 
                 throw new Error('server connection error: transcriber not running or wrong link in settings');
-                // Handle the specific error, e.g., by notifying the user or taking corrective action
             } else {
-                // Handle other types of errors
                 console.error("An unexpected error occurred:", error);
                 this.outputchannel.appendLine("An unexpected error occurred: " + error);
 
                 throw error;
             }
-        } finally {
-            await stopRecording(this.outputchannel);
-            console.log('Listening stopped');
-            this.outputchannel.appendLine('Listening stopped');
-
-            this.updateStatusBarNotListening();
-
         }
-
     }
 
     private async getRecorderSetting(): Promise<string> {
@@ -253,16 +234,35 @@ export default class Extension {
         return recorder;
     }
 
+
     private async transcribeBasedOnRecorder(recorder: string): Promise<string> {
-        switch (recorder) {
-            case 'serenade':
-                return await this.serenadeTranscribing();
-            case 'python':
-                return await this.pythonTranscribing();
-            default:
-                throw new Error(`Unsupported recorder: ${recorder}`);
+    const timeout = (ms: number) => new Promise(resolve => setTimeout(resolve, ms, 'Timeout'));
+    const milliseconds: number = this.transcriberTimeout * 1000;
+
+    try {
+        if(recorder !== 'serenade' && recorder !== 'python') {
+            throw new Error('Invalid recorder selected');
         }
+        const transcriptionPromise = (recorder === 'serenade') ? this.serenadeTranscribing() : this.pythonTranscribing();
+        const result = await Promise.race([
+            transcriptionPromise,
+            timeout(milliseconds)
+        ]);
+
+        if (result === 'Timeout') {
+            console.error(`Operation timed out after ${this.transcriberTimeout} seconds`);
+            this.outputchannel.appendLine(`[ERROR] Recording timed out after ${this.transcriberTimeout} seconds`);
+            this.updateStatusBarNotListening();
+            throw new Error('Transcription timed out');
+        }
+
+        return result as string;
+    } catch (error) {
+        this.updateStatusBarNotListening();
+        console.error('Error during transcription:', error);
+        throw error;
     }
+}
 
     async startListening(): Promise<string> {
         console.log('Listening started');

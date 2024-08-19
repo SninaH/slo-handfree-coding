@@ -399,7 +399,7 @@ export const functions = {
             console.error('Invalid arguments for SHOW_OUTPUT_CHANNEL. Expected 1 argument');
             return dictationMode.invalid_arguments;
         } else {
-            const outputChannel:vscode.OutputChannel = args[0];
+            const outputChannel: vscode.OutputChannel = args[0];
             outputChannel.show();
             return dictationMode.other;
         }
@@ -525,14 +525,23 @@ export const functions = {
             console.error('Invalid arguments for EXECUTE. Expected 0 arguments');
             return dictationMode.invalid_arguments;
         }
-        //execute whats written in editor
-        const terminal = vscode.window.activeTerminal || vscode.window.createTerminal();
-        terminal.show();
         const editor = vscode.window.activeTextEditor;
         if (editor) {
-            const text = editor.document.getText();
-            terminal.sendText(text + '\n');
-            return dictationMode.other;
+            if (editor.document.languageId === 'python') {
+                // get path to python file opened in editor
+                const path = editor.document.uri.fsPath;
+                // execute python file in terminal
+                const terminal = vscode.window.activeTerminal || vscode.window.createTerminal();
+                terminal.show();
+                terminal.sendText(`python3 ${path}`);
+                return dictationMode.other;
+            } else {//execute whats written in editor
+                const terminal = vscode.window.activeTerminal || vscode.window.createTerminal();
+                terminal.show();
+                const text = editor.document.getText();
+                terminal.sendText(text + '\n');
+                return dictationMode.other;
+            }
         } else {
             return dictationMode.no_active_editor;
         }

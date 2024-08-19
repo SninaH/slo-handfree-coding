@@ -33,8 +33,24 @@ async function add_string(text: string, cursorMove?: [number, number]): Promise<
         await editor.edit(editBuilder => {
             editBuilder.replace(selection, text);
         });
+
+        // Ensure there is no selection, just the cursor 
+        // (otherwise if we are adding multiple stuff while there is a selection it will overwrite every time we add it (ex. dodaj vrni ena will write return but then overwrite return and write 1))
+        // (to fix this issue while keeping the selection we would need to change function so that it keeps track what to write and only when it has finished processing all parameters it will write the result)
+        // (this is not a priority right now, but it is a good idea for the future)
+        const currentPosition = editor.selection.active;
+        editor.selection = new vscode.Selection(currentPosition, currentPosition);
+        
         if (cursorMove) {
-            const newPosition = selection.active.translate(cursorMove[0], Math.max(cursorMove[1], 0));
+            // Calculate new position
+            let newLine = currentPosition.line + cursorMove[0];
+            let newCharacter = currentPosition.character + cursorMove[1];
+
+            // Ensure new position is within document boundaries
+            newLine = Math.max(0, Math.min(newLine, editor.document.lineCount - 1));
+            newCharacter = Math.max(0, newCharacter);
+
+            const newPosition = new vscode.Position(newLine, newCharacter);
             editor.selection = new vscode.Selection(newPosition, newPosition);
         }
     }
@@ -234,7 +250,7 @@ async function executeTwoTokens(context: vscode.ExtensionContext, kT0: tokenType
             await pyObjWithNameToFunction[pyObj](name);
             return args.slice(2);
         }
-    } 
+    }
     // else if (kT0 === tokenType.none && kT1 === tokenType.pyObj) {
     //     const pyObj = args[1];
     //     if (pyObj in pyObjWithNameToFunction) {
