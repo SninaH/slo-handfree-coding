@@ -1,5 +1,5 @@
 # slo-handsfree-coding README
-[![slo]](https://github.com/SninaH/slo-handfree-coding/README.slo.md)
+[Klikni za README v slovenščini [SLO]](https://github.com/SninaH/slo-handfree-coding/README.slo.md)
 
 The project was created as part of my thesis "Glasovno programiranje" at University of Ljubljana, interdisciplinary academic higher education programme Computer Science and Mathematics.
 
