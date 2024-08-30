@@ -1,5 +1,5 @@
 # slo-handsfree-coding README
-[![eng](https://img.shields.io/badge/lang-en-red.svg)](https://github.com/SninaH/slo-handsfree-coding/README.md)
+[Click for README in English](README.md)
 
 Ta projekt je bil izdelan kot del diplomske naloge "Glasovno programiranje" pri interdisciplinarnem univerzitetnem študijskem programu prve stopnje Računalništvo in matematika.
 
