@@ -1,5 +1,5 @@
 # slo-handsfree-coding README
-[![slo](https://img.shields.io/badge/lang-en-red.svg)](https://github.com/jonatasemidio/multilanguage-readme-pattern/blob/master/README.md)
+[![slo]](https://github.com/SninaH/slo-handfree-coding/README.slo.md)
 
 The project was created as part of my thesis "Glasovno programiranje" at University of Ljubljana, interdisciplinary academic higher education programme Computer Science and Mathematics.
 
