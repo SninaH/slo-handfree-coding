@@ -1,7 +1,9 @@
 # slo-handsfree-coding README
+[![slo](https://img.shields.io/badge/lang-en-red.svg)](https://github.com/jonatasemidio/multilanguage-readme-pattern/blob/master/README.md)
 
-This is a VScode extension to write and edit Python code and use VScode features like debugging by speaking commands in the Slovenian language.
-This project was created for my Thesis.
+The project was created as part of my thesis "Glasovno programiranje" at University of Ljubljana, interdisciplinary academic higher education programme Computer Science and Mathematics.
+
+This is a VScode extension to write and edit Python code and use VScode features like debugging and using integrated terminal by speaking commands in the Slovenian language.
 
 To je priključek za urejevalnik VScode, ki sem ga ustvarila za diplomsko nalogo. S tem priključkom lahko kodirate tako, da govorite v mikrofon ukaze v slovenščini.
 Lahko pišete in urejate Python kodo ali narekujete splošno besedilo in uporabljate razne funkcije, ki jih ponuja VScode kot je razhroščevanje. 
