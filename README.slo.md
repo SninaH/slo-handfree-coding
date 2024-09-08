@@ -56,9 +56,9 @@ This extension contributes the following settings:
 * `myExtension.enable`: Enable/disable this extension.
 * `myExtension.thing`: Set to `blah` to do something. -->
 
-## Splošne nastavitve
+### Splošne nastavitve
 
-### slo-handsfree-coding.transcriberLinkTranscribe
+#### slo-handsfree-coding.transcriberLinkTranscribe
 
 Povezava za api za pretvorbo wav audio datoteke govora v tekst. 
 
@@ -66,7 +66,7 @@ Povezava za api za pretvorbo wav audio datoteke govora v tekst.
 
 Če želite poskusiti delovanje s kakim drugim razpoznavalnikom spremenite povezavo na api za pretvorbo wav audio datoteke v text vašega razpoznavalnika, ter nastavite ime json parametra kjer je rezultat zapisa v nastavitvah pri `slo-handsfree-coding.transcriptionResultJSONName`
 
-### slo-handsfree-coding.transcriberLinkHealthCheck
+#### slo-handsfree-coding.transcriberLinkHealthCheck
 
 Povezava do api za healthcheck razpoznavalnika. Uporablja se za preverjanje ali razpoznavalnik deluje in pošlje uporabniku opozorilo, če ni.
 
@@ -74,27 +74,27 @@ Povezava do api za healthcheck razpoznavalnika. Uporablja se za preverjanje ali 
 
 Če želite poskusiti delovanje s kakim drugim razpoznavalnikom spremenite povezavo na api za pretvorbo wav audio datoteke v text vašega razpoznavalnika, ter nastavite ime json parametra kjer je rezultat zapisa v nastavitvah pri `slo-handsfree-coding.transcriptionResultJSONName`
 
-### slo-handsfree-coding.transcriptionResultJSONName
+#### slo-handsfree-coding.transcriptionResultJSONName
 
 Ime ključa od JSON objekta, ki ga vrne razpoznavalnik, kjer je rezultat zapisa. Če uporabljate razpoznavalnik slovene-ASR-e2e pustite `result`
 
-### slo-handsfree-coding.speechRecorder
+#### slo-handsfree-coding.speechRecorder
 
 Tu izberete kateri sistem snemanja govora želite uporabiti. Na voljo sta iz python modula SpeechRecognition in od serenade sheech-recorder.
 
-### slo-handsfree-coding.transcriberTimeout
+#### slo-handsfree-coding.transcriberTimeout
 
 Maksimalen čas v sekundah za posneti in predelati z razpoznavalnikom. Privzeta vrednost je 120 sekund.
 
-### slo-handsfree-coding.delimiters
+#### slo-handsfree-coding.delimiters
 
 Vsebina med tema znakoma ne bo procesirana. Znaka morata biti točno dva: znak za začetek in znak za konec vsebine, ki naj ne bo procesirana. Privzeta vrednost sta `<` ter `>` 
 
-### slo-handsfree-coding.transcriptionToLowercase
+#### slo-handsfree-coding.transcriptionToLowercase
 
 Ali naj bo zapis razpoznavalnika pretvorjen vse v male črke pred procesiranjem. 
 
-## Nastavitve imena ukazov
+### Nastavitve imena ukazov
 
 Za razlago delovanja vsakega ukaza poglejte [seznam vseh ukazov](https://github.com/SninaH/slo-handfree-coding/wiki/Ukazi-za-Slo%E2%80%90handsfree%E2%80%90coding) 
 
@@ -108,55 +108,55 @@ Vse skupine nastavitev so sestavljene na enak način:
     - npr. če imamo ukaza `“nehaj” : ”STOP”` in `“nehaj narekovati” : “STOP_DICTATING”`, bo priključek najprej preveril ali je razpoznavalnik vrnil tekst z `nehaj narekovati` in če se ne ujema bo pogledal ali tekst vsebuje `nehaj`.
 - Ko dodajate/spreminjate imena, pazite, da vključite vse oblike besede, ki boste uporabili (sklanjatve, spregatve, …), kot nova imena, saj priključek drugače ne ve, da je to ista beseda le v drugi obliki (npr. če ukaz `NEW` ima le ime `nova`, ko kličete ukaz kot `novi`, ne bo zaznal kot ukaz)
 
-### slo-handsfree-coding.commandsName
+#### slo-handsfree-coding.commandsName
 
 Imena za ukaze, ki nimajo parametrov. Zato, da bo sistem zaznal ta ukaz se mora celoten izpis govora uporabnika ujemati z ukazom.
 
-### slo-handsfree-coding.commandsWithParametersName
+#### slo-handsfree-coding.commandsWithParametersName
 
 Imena za ukaze, ki potrebujejo parametre. Parametri morajo biti za ukazom. Priključek bo procesiral od kjer najde ime ukaza v tekstu, ki ga vrne razpoznavalnik, do konca teksta. 
 
-## Nastavitve imen parametrov
+### Nastavitve imen parametrov
 
-### slo-handsfree-coding.pythonObjectsName
+#### slo-handsfree-coding.pythonObjectsName
 
 Imena parametrov, ki predstavljajo elemente v python kodi. Te parametre se lahko uporabi z ukazi in ADD, NEW. Z ukazom GO deluje trenutno samo PARAMETER.
 
-### slo-handsfree-coding.vscodeObjectsName
+#### slo-handsfree-coding.vscodeObjectsName
 
 Imena parametrov, ki predstavljajo elemente urejevalnika VScode. Uporablja se za ukaze GO, SELECT, ADD, NEW.
 
-### slo-handsfree-coding.directionsName
+#### slo-handsfree-coding.directionsName
 
 Imena parametrov, ki predstavljajo smeri. Uporablja se za ukaza GO in SELECT.
 
-### slo-handsfree-coding.selectionName
+#### slo-handsfree-coding.selectionName
 
 Imena parametrov, ki se uporablja z ukazom SELECT
 
-### slo-handsfree-coding.terminalActionsName
+#### slo-handsfree-coding.terminalActionsName
 
 Imena parametrov, ki se uporablja z ukazom TERMINAL
 
-### slo-handsfree-coding.suggestionName
+#### slo-handsfree-coding.suggestionName
 
 Imena parametrov, ki se uporablja z ukazom SUGGESTION
 
-## ostalo
+### ostalo
 
-### slo-handsfree-coding.specialCharactersName
+#### slo-handsfree-coding.specialCharactersName
 
 Tu lahko določite imena posebnih znakov, črk ali besedil v katere priključek pretvori pri ukazih DICTATE ter ADD.
 
-### slo-handsfree-coding.numbersName
+#### slo-handsfree-coding.numbersName
 
 Tu lahko spremenite imena števil.
 
-### slo-handsfree-coding.terminalOperationName
+#### slo-handsfree-coding.terminalOperationName
 
 Imena operacij, za izvesti v terminalu. Uporabite jih kot parameter za ukaz EXECUTE. Deluje tako kot da bi operacijo oz. desno stran tabele v nastavitvah kopirali, prilepili v terminal od VScode in pritisnili enter oz. return.
 
-### slo-handsfree-coding.vscodeCommandsName
+#### slo-handsfree-coding.vscodeCommandsName
 
 Imena parametrov za ukaz COMMAND. Tu lahko dodajate ukaze od VScode, ki se jih da izvesti z `vscode.commands.executeCommand`. Ukaze lahko najdete npr. na https://code.visualstudio.com/docs/getstarted/keybindings#_basic-editing
 
